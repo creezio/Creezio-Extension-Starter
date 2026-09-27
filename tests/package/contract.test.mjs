@@ -10,6 +10,23 @@ import {canonicalJson,exactInventory,fileSnapshot,npmCommand,tarFiles,validation
 
 const root=fileURLToPath(new URL('../../',import.meta.url));
 
+test('widget assets read by the host are declared runtime files and public package exports',()=>{
+  const descriptor=JSON.parse(readFileSync(path.join(root,'module/manifest.json'),'utf8'));
+  const pack=JSON.parse(readFileSync(path.join(root,'package.json'),'utf8'));
+  const runtime=new Set(descriptor.packaging.runtime.files);
+  const assets=[
+    ...descriptor.contracts.mcp.resources.filter(resource=>resource.source?.kind==='asset')
+      .map(resource=>resource.source.path),
+    ...descriptor.contracts.widgets.flatMap(widget=>widget.actions
+      .filter(action=>action.target?.template).map(action=>action.target.template)),
+  ];
+  assert.ok(assets.length>0);
+  for(const asset of assets){
+    assert.ok(runtime.has(asset),`undeclared widget asset: ${asset}`);
+    assert.equal(pack.exports[`./${asset}`],`./${asset}`,`private widget asset: ${asset}`);
+  }
+});
+
 test('npm pack includes exactly the runtime allowlist and excludes adjacent source',()=>{
   const parent=path.join(root,'.creezio');
   const createdParent=!existsSync(parent);

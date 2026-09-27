@@ -77,6 +77,9 @@
       "types": "./dist/plugin/contributions.d.ts",
       "import": "./dist/plugin/contributions.js"
     },
+    "./ui/widgets/request-card.html": "./ui/widgets/request-card.html",
+    "./ui/widgets/request-picker.html": "./ui/widgets/request-picker.html",
+    "./ui/widgets/request-message.txt": "./ui/widgets/request-message.txt",
     "./module/manifest.json": "./module/manifest.json",
     "./package.json": "./package.json"
   },
