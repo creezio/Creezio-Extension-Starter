@@ -1,6 +1,6 @@
 # Guides de développement du starter
 
-Ces guides locaux concernent `creezio.purchase-requests`. Ils adaptent les [guides publics du socle Creezio, révision `8736c3407981c29acd637a86b669c8f72fc09b10`](https://github.com/creezio/Creezio-D1R2/tree/8736c3407981c29acd637a86b669c8f72fc09b10/skills/development) aux fichiers de ce dépôt. Leur présence ne les installe pas automatiquement dans un client IA et n'autorise aucune publication.
+Ces guides locaux concernent `creezio.purchase-requests`. Ils adaptent les [guides publics du socle Creezio, révision `e67636635a526daa544ea3573b271e1822f3f4fe`](https://github.com/creezio/Creezio-D1R2/tree/e67636635a526daa544ea3573b271e1822f3f4fe/skills/development) aux fichiers de ce dépôt. Leur présence ne les installe pas automatiquement dans un client IA et n'autorise aucune publication.
 
 | Guide | Usage |
 |---|---|

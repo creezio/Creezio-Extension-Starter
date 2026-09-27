@@ -5,7 +5,7 @@ description: Qualifier les six suites du module et vérifier les archives runtim
 
 # Tests et paquets
 
-Lire [AGENTS.md](../../../AGENTS.md), [FILES.md](../../../FILES.md) et le [guide public de packaging fixé à `8736c340`](https://github.com/creezio/Creezio-D1R2/blob/8736c3407981c29acd637a86b669c8f72fc09b10/skills/development/test-and-package/SKILL.md). Exécuter les six suites `backend`, `ui`, `api-mcp`, `widgets`, `package`, `docs` ; une suite absente, vide, skipped ou incomplète ne vaut pas succès.
+Lire [AGENTS.md](../../../AGENTS.md), [FILES.md](../../../FILES.md) et le [guide public de packaging fixé à `e6763663`](https://github.com/creezio/Creezio-D1R2/blob/e67636635a526daa544ea3573b271e1822f3f4fe/skills/development/test-and-package/SKILL.md). Exécuter les six suites `backend`, `ui`, `api-mcp`, `widgets`, `package`, `docs` ; une suite absente, vide, skipped ou incomplète ne vaut pas succès.
 
 Lier les résultats au commit source réel, au manifeste généré et aux octets des archives. Vérifier le paquet npm extrait contre l'inventaire runtime : JS/d.ts compilés, assets, plugin, skill conversationnel et documents installés ; ni sources TS, ni tests, ni secrets, ni données de démo. L'archive de validation conserve les tests et scripts, séparés du Worker. Recompiler depuis la source fixée avant l'emballage ou comparer strictement les octets compilés à un build reproductible ; un `dist/` ignoré et altéré ne doit pas devenir une release attribuée à la bonne source.
 

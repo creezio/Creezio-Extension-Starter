@@ -16,4 +16,6 @@ Le paquet runtime inclut le module, ses interfaces et sa documentation de versio
 
 La CI télécharge le SDK 1.0.0 depuis sa release publique fixée dans [`ci/sdk-pin.json`](ci/sdk-pin.json), vérifie son SHA-256 avant `npm ci`, puis exécute une seule fois `scripts/package.mjs`. Cette commande construit le module, vérifie ses contrats et ses six suites, puis produit le paquet runtime et le reçu de validation. Le SDK reste une dépendance de développement locale à l'archive vérifiée ; le contrat pair du module reste `^1.0.0`.
 
+Pour reproduire ce parcours dans un checkout propre sous PowerShell, exécuter `node ci/bootstrap-sdk.mjs`, puis `npm ci --ignore-scripts --no-audit --no-fund`, définir `$env:CREEZIO_SDK_TARBALL='.creezio/ci/creezio-sdk-1.0.0.tgz'` et lancer `node scripts/package.mjs`. La dernière commande exige un commit source propre afin de lier le manifeste et les archives à son SHA exact.
+
 Voir le [PRD](prd.md) et le [journal de version](CHANGELOG.md). Le dépôt source contient aussi les décisions, le suivi et les instructions de contribution réservés au développement.
