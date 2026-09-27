@@ -87,6 +87,7 @@ test('file category and metadata stay private and context-scoped',()=>{
   assert.equal(file.metadataModel.id,'file_metadata');
   assert.equal(file.contextField,'context_id');
   assert.equal(file.ownerField,'file_owner');
+  assert.equal(file.ownerScope,'principal');
   assert.deepEqual(file.attachment.models.map(model=>model.id),['request']);
   const metadata=manifest.contracts.models.find(model=>model.id==='file_metadata');
   assert.equal(metadata.scope,'context');

@@ -29,6 +29,8 @@ Avant la release SDK, omettre `sdk.url` et passer `--sdk-archive`. Les trois arc
 
 La préparation vérifie les octets de l’archive source publique avant extraction, refuse les liens et chemins sortants, réutilise `demo/app/` si sa provenance correspond, installe les archives vérifiées, puis compare les fichiers installés aux tarballs. Elle choisit le module via `source.kind=package` dans la composition de l’application réelle, avec les widgets fiche et sélection, et demande au verrou central son reçu de validation détaché. Le build passe par les commandes du socle. L’état local D1/R2 reste dans cette application ; il n’est ni exporté ni réinitialisé par la préparation.
 
+Dans `demo/app/` uniquement, la préparation remplace la déclaration npm du workspace SDK par deux dépendances `file:` relatives vers les archives SDK et module vérifiées. Le verrou npm de cette application fixe leurs intégrités et le SDK installé doit être un répertoire ordinaire dont les fichiers correspondent octet pour octet à son tarball. Après une installation interrompue, la préparation réutilise les dépendances déjà présentes et répare l’installation sans répéter `npm ci` ; une reprise validée relit le verrou et les fichiers installés avant le build.
+
 Après `prepare`, ouvrir un terminal PowerShell dans `demo/app/` et conserver la même sélection pour l’installation, le build et le démarrage :
 
 ```powershell

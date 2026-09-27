@@ -173,7 +173,7 @@ const permission={id:'use',title:'Utiliser ses demandes d’achat',audiences:['a
   resources:[...PURCHASE_MODELS.map(m=>model(m.id)),ref('file','request-attachment')],
   actions:['read','create','update','delete','execute'],enforcement:{request:true,commit:true},public:false};
 const files=[{id:'request-attachment',metadataModel:model('file_metadata'),contextField:'context_id',
-  ownerField:'file_owner',storageFields:{id:'file_id',objectKey:'object_key',digest:'digest',
+  ownerField:'file_owner',ownerScope:'principal',storageFields:{id:'file_id',objectKey:'object_key',digest:'digest',
     byteSize:'byte_size',contentType:'content_type',filename:'filename',version:'version',
     state:'state',intentId:'intent_id',generation:'generation'},
   mimeTypes:['text/plain','application/pdf','image/png','image/jpeg'],maxBytes:10485760,
