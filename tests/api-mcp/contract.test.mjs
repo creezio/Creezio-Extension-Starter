@@ -94,3 +94,31 @@ test('file category and metadata stay private and context-scoped',()=>{
   assert.equal(metadata.public,false);
   assert.deepEqual(metadata.primaryKey,['context_id','file_id']);
 });
+
+test('operation effects exactly authorize their model plans and staged file publication',()=>{
+  const expected={
+    'request.create':{reads:[],writes:['model:request']},
+    'request.list':{reads:['model:request'],writes:[]},
+    'request.get':{reads:['model:request'],writes:[]},
+    'request.update':{reads:['model:request'],writes:['model:request']},
+    'request.submit':{reads:['model:request'],writes:['model:request']},
+    'request.withdraw':{reads:['model:request'],writes:['model:request']},
+    'attachment.link':{reads:['model:request','model:file_metadata'],
+      writes:['model:request','model:file_metadata','model:request_attachment','file:request-attachment']},
+    'attachment.list':{reads:['model:request','model:request_attachment'],writes:[]},
+  };
+  assert.deepEqual(new Set(Object.keys(expected)),new Set(operations.keys()));
+  for(const [id,planned] of Object.entries(expected)){
+    const effects=operations.get(id).effects;
+    for(const kind of ['reads','writes'])assert.deepEqual(effects[kind].map(ref=>{
+      assert.equal(ref.moduleId,moduleId);
+      return `${ref.kind}:${ref.id}`;
+    }),planned[kind],`${id} ${kind}`);
+    assert.deepEqual(effects.emits,[]);
+    assert.deepEqual(effects.calls,[]);
+    assert.deepEqual(effects.providers,[]);
+  }
+  const link=operations.get('attachment.link');
+  assert.equal(link.kind,'command');
+  assert.equal(link.effects.writes.at(-1).id,manifest.contracts.files[0].id);
+});

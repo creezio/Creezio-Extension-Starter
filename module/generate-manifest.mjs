@@ -64,10 +64,11 @@ const schemas=Object.entries({
 }).map(([id,schema])=>({id,schema}));
 
 const model=name=>ref('model',name);
-const operation=(id,title,kind,input,output,handler,{reads=[],writes=[],pagination=false,versioned=false}={})=>({
+const operation=(id,title,kind,input,output,handler,{reads=[],writes=[],fileWrites=[],pagination=false,versioned=false}={})=>({
   id,title,kind,input:schema(input),output:schema(output),permissions:use,audiences:['admin','app'],
   actors:['user','delegated-user'],context:'required',handler:{path:'dist/module/operations.js',export:handler},
-  effects:{reads:reads.map(model),writes:writes.map(model),emits:[],calls:[],providers:[]},
+  effects:{reads:reads.map(model),writes:[...writes.map(model),...fileWrites.map(id=>ref('file',id))],
+    emits:[],calls:[],providers:[]},
   errors:[{code:'invalid_input',retryable:false,outcome:'rejected'},
     {code:'unauthorized',retryable:false,outcome:'rejected'},
     {code:'forbidden',retryable:false,outcome:'rejected'},
@@ -98,7 +99,8 @@ const operations=[
   operation('request.withdraw','Retirer une demande','command','request-transition-input','request-output','requestWithdraw',
     {reads:['request'],writes:['request'],versioned:true}),
   operation('attachment.link','Joindre un fichier staged','command','attachment-link-input','attachment-link-output','attachmentLink',
-    {reads:['request','file_metadata'],writes:['request','file_metadata','request_attachment'],versioned:true}),
+    {reads:['request','file_metadata'],writes:['request','file_metadata','request_attachment'],
+      fileWrites:['request-attachment'],versioned:true}),
   operation('attachment.list','Lister les pièces jointes','query','attachment-list-input','attachment-list-output','attachmentList',
     {reads:['request','request_attachment'],pagination:true}),
 ];
