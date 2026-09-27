@@ -1,0 +1,37 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {gzipSync} from 'node:zlib';
+import {sourceEntries} from '../../scripts/demo.mjs';
+
+const revision='a'.repeat(40);
+function header(name,size,type){
+  const value=Buffer.alloc(512);value.write(name,0,'utf8');
+  const octal=(offset,width,number)=>value.write(`${number.toString(8).padStart(width-1,'0')}\0`,offset,width,'ascii');
+  octal(100,8,0o644);octal(108,8,0);octal(116,8,0);octal(124,12,size);octal(136,12,0);
+  value.fill(32,148,156);value.write(type,156,'ascii');value.write('ustar\0',257,'ascii');
+  value.write(`${value.reduce((sum,byte)=>sum+byte,0).toString(8).padStart(6,'0')}\0 `,148,'ascii');
+  return value;
+}
+function archive({comment=revision,fileType='0'}={}){
+  const pax=Buffer.from(`52 comment=${comment}\n`);
+  const file=Buffer.from('{"name":"creezio-d1r2"}\n');
+  const blocks=(name,bytes,type)=>[header(name,bytes.length,type),bytes,
+    Buffer.alloc((512-bytes.length%512)%512)];
+  return gzipSync(Buffer.concat([
+    ...blocks('pax_global_header',pax,'g'),
+    header(`Creezio-D1R2-${revision}/`,0,'5'),
+    ...blocks(`Creezio-D1R2-${revision}/package.json`,file,fileType),
+    Buffer.alloc(1024),
+  ]));
+}
+
+test('the pinned codeload global PAX comment precedes a confined source tree',()=>{
+  const entries=sourceEntries(archive(),revision);
+  assert.deepEqual(entries.map(entry=>entry.path),['package.json']);
+  assert.equal(entries[0].bytes.toString('utf8'),'{'+'"name":"creezio-d1r2"}\n');
+});
+
+test('another global PAX revision or an archive link is refused',()=>{
+  assert.throws(()=>sourceEntries(archive({comment:'b'.repeat(40)}),revision),/global PAX/);
+  assert.throws(()=>sourceEntries(archive({fileType:'2'}),revision),/link or unsupported/);
+});

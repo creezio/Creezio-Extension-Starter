@@ -1,0 +1,1 @@
+Aide-moi à examiner la demande d’achat {{id}} (« {{title}} »), statut {{status}}, montant proposé {{amountMinor}} unités mineures en {{currency}}. N’effectue aucun achat ni approbation sans action explicite autorisée.

@@ -1,0 +1,110 @@
+{
+  "name": "@creezio/purchase-requests",
+  "version": "0.1.0",
+  "description": "Module Creezio de demandes d’achat, avec vues et widgets MCP Apps.",
+  "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/creezio/Creezio-Extension-Starter.git"
+  },
+  "engines": {
+    "node": ">=24 <25"
+  },
+  "files": [
+    "module/manifest.json",
+    "dist/",
+    "ui/widgets/*.html",
+    "ui/widgets/request-message.txt",
+    "plugin/plugin.json",
+    "plugin/mcp.json",
+    "plugin/skills/review-purchase-request/SKILL.md",
+    "README.md",
+    "prd.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "exports": {
+    "./dist/module/entry.server.js": {
+      "types": "./dist/module/entry.server.d.ts",
+      "import": "./dist/module/entry.server.js"
+    },
+    "./dist/module/operations.js": {
+      "types": "./dist/module/operations.d.ts",
+      "import": "./dist/module/operations.js"
+    },
+    "./dist/module/models.js": {
+      "types": "./dist/module/models.d.ts",
+      "import": "./dist/module/models.js"
+    },
+    "./dist/module/public-contract.js": {
+      "types": "./dist/module/public-contract.d.ts",
+      "import": "./dist/module/public-contract.js"
+    },
+    "./dist/ui/contributions.js": {
+      "types": "./dist/ui/contributions.d.ts",
+      "import": "./dist/ui/contributions.js"
+    },
+    "./dist/ui/workspace/views.js": {
+      "types": "./dist/ui/workspace/views.d.ts",
+      "import": "./dist/ui/workspace/views.js"
+    },
+    "./dist/ui/workspace/state.js": {
+      "types": "./dist/ui/workspace/state.d.ts",
+      "import": "./dist/ui/workspace/state.js"
+    },
+    "./dist/ui/workspace/components.js": {
+      "types": "./dist/ui/workspace/components.d.ts",
+      "import": "./dist/ui/workspace/components.js"
+    },
+    "./dist/ui/widgets/request-card.js": {
+      "types": "./dist/ui/widgets/request-card.d.ts",
+      "import": "./dist/ui/widgets/request-card.js"
+    },
+    "./dist/ui/widgets/request-picker.js": {
+      "types": "./dist/ui/widgets/request-picker.d.ts",
+      "import": "./dist/ui/widgets/request-picker.js"
+    },
+    "./dist/ui/widgets/runtime.js": {
+      "types": "./dist/ui/widgets/runtime.d.ts",
+      "import": "./dist/ui/widgets/runtime.js"
+    },
+    "./dist/ui/widgets/data.js": {
+      "types": "./dist/ui/widgets/data.d.ts",
+      "import": "./dist/ui/widgets/data.js"
+    },
+    "./dist/plugin/contributions.js": {
+      "types": "./dist/plugin/contributions.d.ts",
+      "import": "./dist/plugin/contributions.js"
+    },
+    "./ui/widgets/request-card.html": "./ui/widgets/request-card.html",
+    "./ui/widgets/request-picker.html": "./ui/widgets/request-picker.html",
+    "./ui/widgets/request-message.txt": "./ui/widgets/request-message.txt",
+    "./module/manifest.json": "./module/manifest.json",
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "check": "node gate.mjs",
+    "pack": "node scripts/package.mjs"
+  },
+  "peerDependencies": {
+    "@creezio/sdk": "^1.0.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/ext-apps": "2.0.3",
+    "@modelcontextprotocol/core": "2.1.0",
+    "zod": "4.6.5"
+  },
+  "devDependencies": {
+    "@creezio/sdk": "file:.creezio/ci/creezio-sdk-1.0.0.tgz",
+    "@types/node": "22.19.19",
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3",
+    "typescript": "5.9.3",
+    "ajv": "8.20.0",
+    "ajv-formats": "3.0.1"
+  }
+}
