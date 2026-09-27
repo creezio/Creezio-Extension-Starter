@@ -99,6 +99,7 @@
     "zod": "4.6.5"
   },
   "devDependencies": {
+    "@creezio/sdk": "file:.creezio/ci/creezio-sdk-1.0.0.tgz",
     "@types/node": "22.19.19",
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",

@@ -1,0 +1,33 @@
+name: Package module
+
+on: [push, pull_request]
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - name: Verify checkout
+        env:
+          EXPECTED_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          package-manager-cache: false
+      - name: Test SDK bootstrap
+        run: node --test ci/bootstrap-sdk.test.mjs
+      - name: Download verified SDK release
+        run: node ci/bootstrap-sdk.mjs
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Build, test and package
+        env:
+          CREEZIO_SDK_TARBALL: .creezio/ci/creezio-sdk-1.0.0.tgz
+        run: node scripts/package.mjs

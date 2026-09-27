@@ -14,4 +14,6 @@ Les fiches exposent `amountMinor` (entier en unités mineures), `currency` (troi
 
 Le paquet runtime inclut le module, ses interfaces et sa documentation de version. Les tests et instructions de développement forment un artefact de validation séparé. La démo utilise une version fixée du vrai Creezio et installe le paquet comme le ferait une autre application ; elle n'est pas un autre backend du module.
 
+La CI télécharge le SDK 1.0.0 depuis sa release publique fixée dans [`ci/sdk-pin.json`](ci/sdk-pin.json), vérifie son SHA-256 avant `npm ci`, puis exécute une seule fois `scripts/package.mjs`. Cette commande construit le module, vérifie ses contrats et ses six suites, puis produit le paquet runtime et le reçu de validation. Le SDK reste une dépendance de développement locale à l'archive vérifiée ; le contrat pair du module reste `^1.0.0`.
+
 Voir le [PRD](prd.md) et le [journal de version](CHANGELOG.md). Le dépôt source contient aussi les décisions, le suivi et les instructions de contribution réservés au développement.
