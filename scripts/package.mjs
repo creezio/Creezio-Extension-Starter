@@ -4,6 +4,7 @@ import {existsSync,lstatSync,mkdirSync,readFileSync,readdirSync,renameSync,rmdir
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {gzipSync,gunzipSync} from 'node:zlib';
+import {assertSupportedSdk} from './sdk-version.mjs';
 
 const root=fileURLToPath(new URL('../',import.meta.url));
 const output='.creezio/packages';
@@ -66,7 +67,7 @@ function sourceProof(manifest){
 function sdkProof(packageJson){
   const sdkPath=confinedFile(root,'node_modules/@creezio/sdk/package.json');
   const installed=JSON.parse(readFileSync(sdkPath,'utf8'));
-  if(installed.name!=='@creezio/sdk'||installed.version!=='1.0.0')fail('installed SDK identity');
+  try{assertSupportedSdk(installed);}catch(error){fail(error.message);}
   if(packageJson.peerDependencies?.['@creezio/sdk']!=='^1.0.0')fail('SDK peer contract');
   const declared=process.env.CREEZIO_SDK_TARBALL;
   if(!declared||!declared.endsWith('.tgz'))fail('CREEZIO_SDK_TARBALL must identify the built SDK npm tarball');
@@ -76,6 +77,19 @@ function sdkProof(packageJson){
   const bytes=readFileSync(tarball);
   const entries=tarFiles(bytes);
   if(entries.length===0)fail('empty SDK tarball');
+  const manifest=entries.find(entry=>entry.path==='package/package.json');
+  if(!manifest)fail('SDK tarball lacks package.json');
+  let archived;
+  try{archived=JSON.parse(manifest.bytes.toString('utf8'));assertSupportedSdk(archived);}
+  catch(error){fail(`SDK tarball identity: ${error.message}`);}
+  if(archived.version!==installed.version)fail('SDK tarball version differs from installation');
+  if(installed.version==='1.1.0'){
+    for(const name of ['context','transport'])for(const file of [
+      `package/dist/types/sdk/delivery/${name}.d.ts`,
+      `package/dist/esm/delivery/${name}.js`]){
+      if(!entries.some(entry=>entry.path===file))fail(`SDK tarball lacks ${file}`);
+    }
+  }
   const installedRoot=path.join(root,'node_modules/@creezio/sdk');
   for(const entry of entries){
     if(!entry.path.startsWith('package/'))fail('SDK tarball layout');

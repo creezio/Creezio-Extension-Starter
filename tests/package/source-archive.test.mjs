@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {gzipSync} from 'node:zlib';
-import {sourceEntries} from '../../scripts/demo.mjs';
+import {assertDemoSdkArchive,checkedSourceLock,sourceEntries} from '../../scripts/demo.mjs';
 
 const revision='a'.repeat(40);
 function header(name,size,type){
@@ -34,4 +34,22 @@ test('the pinned codeload global PAX comment precedes a confined source tree',()
 test('another global PAX revision or an archive link is refused',()=>{
   assert.throws(()=>sourceEntries(archive({comment:'b'.repeat(40)}),revision),/global PAX/);
   assert.throws(()=>sourceEntries(archive({fileType:'2'}),revision),/link or unsupported/);
+});
+
+test('legacy T30 lock selects only a verified SDK 1.0 archive',()=>{
+  const integrity=`sha256-${'a'.repeat(64)}`;
+  const lock={schemaVersion:1,core:{repository:'https://github.com/creezio/Creezio-D1R2',
+    revision,url:`https://codeload.github.com/creezio/Creezio-D1R2/tar.gz/${revision}`,
+    integrity},sdk:{integrity},module:{runtimeIntegrity:integrity,
+    validationIntegrity:integrity,receiptIntegrity:integrity}};
+  assert.equal(checkedSourceLock(lock,'local-sdk.tgz').sdk.version,'1.0.0');
+  assert.equal(lock.sdk.version,undefined);
+  const entries=[{path:'package/package.json',bytes:Buffer.from(JSON.stringify({
+    name:'@creezio/sdk',version:'1.0.0'}))}];
+  assert.doesNotThrow(()=>assertDemoSdkArchive(entries,'1.0.0'));
+  assert.throws(()=>assertDemoSdkArchive([{...entries[0],bytes:Buffer.from(JSON.stringify({
+    name:'@creezio/sdk',version:'1.1.0'}))}],'1.0.0'),/SDK archive identity|version differs/);
+  assert.throws(()=>checkedSourceLock({...lock,sdk:{...lock.sdk,
+    url:'https://github.com/creezio/Creezio-D1R2/releases/download/sdk-v1.1.0/creezio-sdk-1.1.0.tgz'}},
+    'local-sdk.tgz'),/invalid source lock/);
 });

@@ -5,6 +5,7 @@ import {execFileSync} from 'node:child_process';
 import path from 'node:path';
 import ts from 'typescript';
 import {validateModule} from '@creezio/sdk/contracts/node';
+import {assertSupportedSdk} from './sdk-version.mjs';
 
 const root=fileURLToPath(new URL('../',import.meta.url));
 const git=(...args)=>execFileSync('git',args,{cwd:root,windowsHide:true,maxBuffer:32*1024*1024});
@@ -12,7 +13,7 @@ if(git('status','--porcelain','--untracked-files=all').toString().trim())throw n
 const revision=git('rev-parse','HEAD').toString().trim();
 const sourceIntegrity='sha256-'+createHash('sha256').update(git('archive','--format=tar',revision)).digest('hex');
 const sdk=JSON.parse(readFileSync(fileURLToPath(import.meta.resolve('@creezio/sdk/package.json')),'utf8'));
-if(sdk.name!=='@creezio/sdk'||sdk.version!=='1.0.0')throw new Error('Install the supported, verified Creezio SDK package.');
+assertSupportedSdk(sdk);
 for(const name of ['dist','.quality']){
  const target=path.join(root,name);const stat=lstatSync(target,{throwIfNoEntry:false});
  if(stat&&(!stat.isDirectory()||stat.isSymbolicLink()))throw new Error('Invalid build directory.');
