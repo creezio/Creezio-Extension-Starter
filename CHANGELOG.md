@@ -1,6 +1,14 @@
 # Changelog
 
-## 0.1.2 — candidate
+## 0.1.3 — candidate, non publiée
+
+- Les vues workspace et front réutilisent le journal public du SDK 1.2 pour persister la clé d'une nouvelle commande avant son envoi, consulter un résultat incertain par statut et ne jamais rejouer la commande automatiquement.
+- Les panneaux 0.1.2 qui portent une ancienne commande incertaine restent consultables par leur pointeur de statut existant. Ils bloquent tout nouvel envoi jusqu'à confirmation ; aucune identité de session n'est déduite de leur seul contenu.
+- Les brouillons, onglets et pièces jointes restent liés au panneau et au scope vérifiés ; une réponse tardive d'un ancien scope ne remplace pas la fiche courante.
+- Le schéma de sortie précise qu'`amountMinor=12345` avec `EUR` représente 123,45 EUR. Cette annotation ne qualifie pas à elle seule la prose du chat interne.
+- Le pin, le verrou npm et la CI fixent l'archive publique SDK 1.2.0 à son SHA-256 vérifié. Aucun paquet 0.1.3 n'est publié par ce candidat.
+
+## 0.1.2 — publiée
 
 - La vue de création front passe de `/requests/new` à `/purchase-requests/new` pour éliminer le chevauchement avec `/requests/{id}`.
 - Un test de navigation par le composant public `Workspace` du SDK constate l'ambiguïté de l'ancien chemin et valide le nouveau chemin et la fiche.

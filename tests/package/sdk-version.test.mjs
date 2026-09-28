@@ -10,11 +10,16 @@ const delivery={
     import:'./dist/esm/delivery/transport.js'},
 };
 
-test('published SDK 1.1 must expose both delivery entries; 1.0 remains supported',()=>{
+test('SDK 1.2 requires the public command journal alongside delivery entries',()=>{
   assert.equal(assertSupportedSdk(sdk('1.0.0')), '1.0.0');
   assert.equal(assertSupportedSdk(sdk('1.1.0',delivery)), '1.1.0');
   assert.throws(()=>assertSupportedSdk(sdk('1.1.0',{'./delivery/context':delivery['./delivery/context']})),
     /delivery\/transport/);
-  assert.throws(()=>assertSupportedSdk(sdk('1.2.0',delivery)),/supported/);
+  const journal={'./operations/command-journal':{
+    types:'./dist/types/sdk/operations/command-journal.d.ts',
+    import:'./dist/esm/operations/command-journal.js'}};
+  assert.equal(assertSupportedSdk(sdk('1.2.0',{...delivery,...journal})),'1.2.0');
+  assert.throws(()=>assertSupportedSdk(sdk('1.2.0',delivery)),/command journal/);
   assert.equal(sdkArchiveName('1.1.0'),'creezio-sdk-1.1.0.tgz');
+  assert.equal(sdkArchiveName('1.2.0'),'creezio-sdk-1.2.0.tgz');
 });

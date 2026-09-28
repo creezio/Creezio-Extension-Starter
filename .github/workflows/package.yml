@@ -29,5 +29,5 @@ jobs:
         run: npm ci --ignore-scripts --no-audit --no-fund
       - name: Build, test and package
         env:
-          CREEZIO_SDK_TARBALL: .creezio/ci/creezio-sdk-1.1.0.tgz
+          CREEZIO_SDK_TARBALL: .creezio/ci/creezio-sdk-1.2.0.tgz
         run: node scripts/package.mjs

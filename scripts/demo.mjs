@@ -88,7 +88,7 @@ export function checkedSourceLock(lock,sdkArchive){
     ||lock.core.repository!=='https://github.com/creezio/Creezio-D1R2'
     ||lock.core.url!==`https://codeload.github.com/creezio/Creezio-D1R2/tar.gz/${lock.core.revision}`
     ||!hex.test(lock.core.integrity)||!hex.test(lock.sdk?.integrity)
-    ||!['1.0.0','1.1.0'].includes(sdkVersion)
+    ||!['1.0.0','1.1.0','1.2.0'].includes(sdkVersion)
     ||(lock.sdk.url!==undefined&&lock.sdk.url!==`https://github.com/creezio/Creezio-D1R2/releases/download/sdk-v${sdkVersion}/${sdkArchiveName(sdkVersion)}`)
     ||(!lock.sdk.url&&!sdkArchive)
     ||!hex.test(lock.module?.runtimeIntegrity)||!hex.test(lock.module?.validationIntegrity)
@@ -200,12 +200,17 @@ export function assertDemoSdkArchive(sdkEntries,version){
   try{sdk=JSON.parse(sdkManifest.bytes.toString('utf8'));assertSupportedSdk(sdk);}
   catch(error){fail(`SDK archive identity: ${error.message}`);}
   if(sdk.version!==version)fail('SDK archive version differs from source lock');
-  if(sdk.version==='1.1.0'){
+  if(sdk.version==='1.1.0'||sdk.version==='1.2.0'){
     for(const name of ['context','transport'])for(const file of [
       `package/dist/types/sdk/delivery/${name}.d.ts`,
       `package/dist/esm/delivery/${name}.js`]){
       if(!sdkEntries.some(entry=>entry.path===file))fail(`SDK archive lacks ${file}`);
     }
+  }
+  if(sdk.version==='1.2.0')for(const file of [
+    'package/dist/types/sdk/operations/command-journal.d.ts',
+    'package/dist/esm/operations/command-journal.js']){
+    if(!sdkEntries.some(entry=>entry.path===file))fail(`SDK archive lacks ${file}`);
   }
 }
 async function placePackages(lock,sdkArchive){

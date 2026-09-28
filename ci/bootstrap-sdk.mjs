@@ -21,7 +21,7 @@ export function validatePin(pin){
   if(!pin||typeof pin!=='object'||Array.isArray(pin)
     ||Object.keys(pin).sort().join(',')!=='integrity,schemaVersion,url'
     ||pin.schemaVersion!==1
-    ||!/^https:\/\/github\.com\/creezio\/Creezio-D1R2\/releases\/download\/sdk-v1\.(0|1)\.0\/creezio-sdk-1\.\1\.0\.tgz$/.test(pin.url)
+    ||!/^https:\/\/github\.com\/creezio\/Creezio-D1R2\/releases\/download\/sdk-v1\.(0|1|2)\.0\/creezio-sdk-1\.\1\.0\.tgz$/.test(pin.url)
     ||typeof pin.integrity!=='string'||!/^sha256-[a-f0-9]{64}$/.test(pin.integrity))
     fail('invalid public release pin');
   return pin;
@@ -47,7 +47,7 @@ export async function fetchVerifiedArchive(pin,fetchImpl=fetch,limit=maxBytes){
 
 export async function bootstrapSdk(){
   const pin=validatePin(JSON.parse(readFileSync(pinPath,'utf8')));
-  const version=/sdk-v(1\.(?:0|1)\.0)\//.exec(pin.url)[1];
+  const version=/sdk-v(1\.(?:0|1|2)\.0)\//.exec(pin.url)[1];
   const target=path.join(targetDirectory,`creezio-sdk-${version}.tgz`);
   directory(path.join(root,'.creezio'));
   directory(targetDirectory);

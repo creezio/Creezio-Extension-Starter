@@ -1,4 +1,5 @@
-import {PURCHASE_OPERATIONS, type PurchaseAttachment, type PurchaseRequest} from '../../module/public-contract.ts';
+import {PURCHASE_OPERATIONS, purchaseBindingId, type PurchaseAttachment, type PurchaseRequest} from '../../module/public-contract.ts';
+import {readPendingCommand, type PendingCommand} from '@creezio/sdk/operations/command-journal';
 
 export type PurchaseDraft = Readonly<{
   title: string;
@@ -6,11 +7,14 @@ export type PurchaseDraft = Readonly<{
   amountText: string;
   currency: string;
 }>;
-export type PendingPurchaseCommand = Readonly<{
+export type LegacyPendingPurchaseCommand = Readonly<{
   operationId: typeof PURCHASE_OPERATIONS[keyof typeof PURCHASE_OPERATIONS];
   requestKey: string;
   executionId?: string;
 }>;
+export type PendingPurchaseCommand = LegacyPendingPurchaseCommand | PendingCommand;
+export const isLegacyPending = (pending: PendingPurchaseCommand): pending is LegacyPendingPurchaseCommand =>
+  'operationId' in pending;
 /** Only non-secret presentation state is restored by the host's validated panel store. */
 export type PurchasePanelStateV1 = Readonly<{
   version: 1;
@@ -25,6 +29,8 @@ const object = (value: unknown): value is Record<string, unknown> =>
 const bounded = (value: unknown, limit: number): value is string =>
   typeof value === 'string' && value.length <= limit && value.isWellFormed()
   && !/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/.test(value);
+const scopedId = (value: unknown): value is string =>
+  typeof value === 'string' && value.length <= 128 && /^[A-Za-z0-9][A-Za-z0-9._:-]*$/.test(value);
 
 export function purchaseRequest(value: unknown): PurchaseRequest | null {
   if (!object(value) || !bounded(value.id, 128) || !value.id || !bounded(value.title, 240)
@@ -86,15 +92,37 @@ export function panelState(value: unknown): PurchasePanelStateV1 | null {
     || !bounded(value.draft.amountText, 32) || !/^[A-Z]{3}$/.test(String(value.draft.currency))
     || value.baseRevision !== null && (!Number.isSafeInteger(value.baseRevision) || (value.baseRevision as number) < 1)
     || typeof value.dirty !== 'boolean') return null;
-  if (value.pending !== null && (!object(value.pending)
-    || !Object.values(PURCHASE_OPERATIONS).includes(value.pending.operationId as typeof PURCHASE_OPERATIONS[keyof typeof PURCHASE_OPERATIONS])
-    || !bounded(value.pending.requestKey, 128) || !value.pending.requestKey
-    || value.pending.executionId !== undefined && !bounded(value.pending.executionId, 128))) return null;
+  if (value.pending !== null) {
+    if (!object(value.pending)) return null;
+    if ('operationId' in value.pending) {
+      if (!Object.values(PURCHASE_OPERATIONS).includes(value.pending.operationId as typeof PURCHASE_OPERATIONS[keyof typeof PURCHASE_OPERATIONS])
+        || !bounded(value.pending.requestKey, 128) || !value.pending.requestKey
+        || value.pending.executionId !== undefined && !bounded(value.pending.executionId, 128)) return null;
+    } else if (!scopedId(value.pending.sessionId)
+      || !['admin', 'app'].includes(String(value.pending.audience))
+      || !scopedId(value.pending.contextId)
+      || !readPendingCommand(value.pending, {sessionId: value.pending.sessionId,
+        audience: value.pending.audience as 'admin' | 'app', contextId: value.pending.contextId})
+      || !Object.values(PURCHASE_OPERATIONS).some(operationId =>
+        value.pending && object(value.pending) && value.pending.bindingId ===
+          purchaseBindingId(value.pending.audience as 'admin' | 'app', operationId))
+      || !bounded(value.pending.requestKey, 128) || !value.pending.requestKey
+      || value.pending.intent !== undefined && (!bounded(value.pending.intent, 64)
+        || !Object.values(PURCHASE_OPERATIONS).includes(value.pending.intent as typeof PURCHASE_OPERATIONS[keyof typeof PURCHASE_OPERATIONS]))
+      || value.pending.targetId !== undefined && !scopedId(value.pending.targetId)
+      || Object.keys(value.pending).some(key => !['sessionId','audience','contextId','bindingId',
+        'requestKey','intent','targetId'].includes(key))) return null;
+  }
   return value as PurchasePanelStateV1;
 }
 
 export function initialPanelState(): PurchasePanelStateV1 {
   return {version: 1, draft: emptyDraft(), baseRevision: null, dirty: false, pending: null};
+}
+
+/** A fresh reference also wakes a retained panel restored from the same SDK snapshot. */
+export function restoredPanelState(value: unknown): PurchasePanelStateV1 {
+  return {...(panelState(value) ?? initialPanelState())};
 }
 
 export function reconcileRequest(state: PurchasePanelStateV1, request: PurchaseRequest):
@@ -105,6 +133,25 @@ export function reconcileRequest(state: PurchasePanelStateV1, request: PurchaseR
     dirty: false}, conflict: false};
 }
 
-export function pendingStatusTarget(pending: PendingPurchaseCommand) {
+/** A terminal status may arrive after a fresher request.get was already shown. */
+export function commandResultForCurrent(current: PurchaseRequest | null, latestRevision: number | null,
+  candidate: PurchaseRequest | null): PurchaseRequest | null {
+  return candidate && (!current || candidate.id === current.id)
+    && (!current || candidate.revision >= current.revision)
+    && (latestRevision === null || candidate.revision >= latestRevision) ? candidate : null;
+}
+
+export function pendingStatusTarget(pending: LegacyPendingPurchaseCommand) {
   return pending.executionId ? {executionId: pending.executionId} : {requestKey: pending.requestKey};
+}
+
+/** Inspection cannot supersede the lease of a still-running mutation. */
+export function canInspectPending(pending: PendingPurchaseCommand | null, available: boolean,
+  checking: boolean, busy: boolean, inFlight: boolean): pending is PendingPurchaseCommand {
+  return !!pending && available && !checking && !busy && !inFlight;
+}
+
+export function canRenderPanel(ready: boolean, active: boolean, authorized: boolean,
+  activity: boolean): boolean {
+  return ready && active && authorized && activity;
 }
