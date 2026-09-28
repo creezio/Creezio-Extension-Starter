@@ -182,7 +182,8 @@ const files=[{id:'request-attachment',metadataModel:model('file_metadata'),conte
   public:false,permissions:use,attachment:{models:[model('request')],multiple:true},deletion:'restrict'}];
 const suiteNames=['backend','ui','api-mcp','widgets','package','docs'];
 const suites=Object.fromEntries(suiteNames.map(name=>[name,{mode:'required',script:`ci/${name}.mjs`,
-  tests:[`tests/${name}/contract.test.mjs`,...(name==='package'?['tests/package/source-archive.test.mjs']:[])]}]));
+  tests:[`tests/${name}/contract.test.mjs`,...(name==='package'?
+    ['tests/package/source-archive.test.mjs','tests/package/sdk-version.test.mjs']:[])]}]));
 const compiledJs=['dist/module/entry.server.js','dist/module/operations.js','dist/module/models.js',
   'dist/module/public-contract.js','dist/ui/contributions.js','dist/ui/workspace/views.js',
   'dist/ui/workspace/state.js','dist/ui/workspace/components.js','dist/ui/widgets/request-card.js',
@@ -248,7 +249,8 @@ const manifest={
       'ui/widgets/request-card.ts','ui/widgets/request-picker.ts','ui/widgets/runtime.ts',
       'ui/widgets/data.ts',
       'plugin/contributions.ts','tsconfig.json','scripts/build.mjs','scripts/package.mjs',
-      'scripts/demo.mjs','demo/README.md','tests/package/source-archive.test.mjs',...suiteNames.flatMap(name=>
+      'scripts/demo.mjs','scripts/sdk-version.mjs','demo/README.md',
+      'tests/package/source-archive.test.mjs','tests/package/sdk-version.test.mjs',...suiteNames.flatMap(name=>
         [`ci/${name}.mjs`,`tests/${name}/contract.test.mjs`]),'ci/run-suite.mjs'],references:[]},
     validationBinding:{moduleId,moduleVersion:version,sourceRevision},noRuntimeTests:true,
     installation:'build-and-publish',providerInstallation:false},

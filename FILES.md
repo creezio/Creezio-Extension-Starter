@@ -7,10 +7,10 @@
 - `ui/` : vues workspace/front, états de formulaire et composants publics.
 - `plugin/` : manifeste, configuration MCP, contribution et skill de lecture des demandes ; les ressources/widgets HTML sont dans `ui/widgets/`.
 - `tests/` : six familles de contrôles backend/ui/api-mcp/widgets/package/docs.
-- `ci/bootstrap-sdk.mjs`, `ci/bootstrap-sdk.test.mjs` et `ci/sdk-pin.json` : téléchargement borné de la release publique du SDK, vérification SHA-256 et tests de refus ; `ci/run-suite.mjs` contrôle les six familles.
+- `ci/bootstrap-sdk.mjs`, `ci/bootstrap-sdk.test.mjs` et `ci/sdk-pin.json` : téléchargement borné de la release publique SDK 1.1.0, vérification SHA-256 et tests de refus ; `ci/run-suite.mjs` contrôle les six familles.
 - `.github/workflows/package.yml` et `package-lock.json` : CI sur le head exact de PR ou push, dépendances npm figées et empaquetage unique.
 - `skills/development/` : cinq guides locaux de développement liés à la révision publique `e6763663` du socle ; distincts du skill conversationnel distribué.
-- `scripts/` : préparation et vérification des distributions et de la démo ; `scripts/demo.mjs` installe les archives SDK/module épinglées dans l'application persistante et vérifie leurs fichiers et le verrou npm.
+- `scripts/` : préparation et vérification des distributions et de la démo ; `scripts/sdk-version.mjs` borne les versions SDK et les exports delivery publics de 1.1.0 ; `scripts/demo.mjs` installe les archives SDK/module épinglées dans l'application persistante et vérifie leurs fichiers et le verrou npm. `module/generate-manifest.mjs` inclut ces contrôles dans la suite package et l'archive de validation.
 - `demo/` : configuration de l'application de démonstration ; son état local n'est pas distribué.
 - `README.md`, `prd.md`, `CHANGELOG.md`, `LICENSE` : documentation installée liée à la version.
 - `AGENTS.md`, `interview.md`, `TODO.md`, `CONTRIBUTING.md` : instructions, décisions et suivi de développement.

@@ -6,7 +6,6 @@ import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const pinPath=path.join(root,'ci/sdk-pin.json');
 const targetDirectory=path.join(root,'.creezio/ci');
-const target=path.join(targetDirectory,'creezio-sdk-1.0.0.tgz');
 const maxBytes=8*1024*1024;
 const sha256=bytes=>`sha256-${createHash('sha256').update(bytes).digest('hex')}`;
 const fail=message=>{throw new Error(`SDK bootstrap refused: ${message}`);};
@@ -22,7 +21,7 @@ export function validatePin(pin){
   if(!pin||typeof pin!=='object'||Array.isArray(pin)
     ||Object.keys(pin).sort().join(',')!=='integrity,schemaVersion,url'
     ||pin.schemaVersion!==1
-    ||pin.url!=='https://github.com/creezio/Creezio-D1R2/releases/download/sdk-v1.0.0/creezio-sdk-1.0.0.tgz'
+    ||!/^https:\/\/github\.com\/creezio\/Creezio-D1R2\/releases\/download\/sdk-v1\.(0|1)\.0\/creezio-sdk-1\.\1\.0\.tgz$/.test(pin.url)
     ||typeof pin.integrity!=='string'||!/^sha256-[a-f0-9]{64}$/.test(pin.integrity))
     fail('invalid public release pin');
   return pin;
@@ -48,6 +47,8 @@ export async function fetchVerifiedArchive(pin,fetchImpl=fetch,limit=maxBytes){
 
 export async function bootstrapSdk(){
   const pin=validatePin(JSON.parse(readFileSync(pinPath,'utf8')));
+  const version=/sdk-v(1\.(?:0|1)\.0)\//.exec(pin.url)[1];
+  const target=path.join(targetDirectory,`creezio-sdk-${version}.tgz`);
   directory(path.join(root,'.creezio'));
   directory(targetDirectory);
   if(existsSync(target)){
@@ -63,7 +64,7 @@ export async function bootstrapSdk(){
       renameSync(temporary,target);
     }finally{if(existsSync(temporary))unlinkSync(temporary);}
   }
-  console.log(JSON.stringify({status:'verified',path:'.creezio/ci/creezio-sdk-1.0.0.tgz',
+  console.log(JSON.stringify({status:'verified',path:`.creezio/ci/creezio-sdk-${version}.tgz`,
     integrity:pin.integrity,bytes:readFileSync(target).length}));
 }
 

@@ -2,7 +2,7 @@
 
 Ce dépôt fournit une extension complète de demandes d'achat : données, opérations, écran workspace/front et plusieurs widgets conversationnels. Il sert de point de départ pour développer un module installable dans une application Creezio. Le module fonctionne avec ou sans chat.
 
-Version en construction : **0.1.0**. La distribution et les commandes de démarrage seront documentées après leur qualification ; la présence des sources ne constitue pas encore une version installable validée.
+Version publiée du module : **0.1.0**, tag [`module-v0.1.0`](https://github.com/creezio/Creezio-Extension-Starter/releases/tag/module-v0.1.0) depuis le commit `527a1bc1446a529ad6e560e3a25dea13a12001e9`. Les modifications de ce checkout restent distinctes des archives publiques immuables de cette release.
 
 Une demande appartient à son utilisateur et à son contexte. Elle peut être préparée, modifiée, soumise ou retirée, avec un montant proposé et des pièces jointes privées. Soumettre enregistre une demande ; cela ne réalise aucun achat et n'approuve aucune dépense. Les mêmes permissions sont appliquées aux écrans, API, MCP et widgets.
 
@@ -14,8 +14,12 @@ Les fiches exposent `amountMinor` (entier en unités mineures), `currency` (troi
 
 Le paquet runtime inclut le module, ses interfaces et sa documentation de version. Les tests et instructions de développement forment un artefact de validation séparé. La démo utilise une version fixée du vrai Creezio et installe le paquet comme le ferait une autre application ; elle n'est pas un autre backend du module.
 
-La CI télécharge le SDK 1.0.0 depuis sa release publique fixée dans [`ci/sdk-pin.json`](ci/sdk-pin.json), vérifie son SHA-256 avant `npm ci`, puis exécute une seule fois `scripts/package.mjs`. Cette commande construit le module, vérifie ses contrats et ses six suites, puis produit le paquet runtime et le reçu de validation. Le SDK reste une dépendance de développement locale à l'archive vérifiée ; le contrat pair du module reste `^1.0.0`.
+La CI télécharge le SDK 1.1.0 depuis sa [release publique](https://github.com/creezio/Creezio-D1R2/releases/tag/sdk-v1.1.0), fixée dans [`ci/sdk-pin.json`](ci/sdk-pin.json), vérifie son SHA-256 avant `npm ci`, puis exécute une seule fois `scripts/package.mjs`. Cette commande construit le module, vérifie ses contrats et ses six suites, puis produit le paquet runtime et le reçu de validation du commit courant. Le SDK reste une dépendance de développement locale à l'archive vérifiée ; le contrat pair du module reste `^1.0.0`.
 
-Pour reproduire ce parcours dans un checkout propre sous PowerShell, exécuter `node ci/bootstrap-sdk.mjs`, puis `npm ci --ignore-scripts --no-audit --no-fund`, définir `$env:CREEZIO_SDK_TARBALL='.creezio/ci/creezio-sdk-1.0.0.tgz'` et lancer `node scripts/package.mjs`. La dernière commande exige un commit source propre afin de lier le manifeste et les archives à son SHA exact.
+Le SDK 1.1.0 public exporte `@creezio/sdk/delivery/context` et `@creezio/sdk/delivery/transport`. Le pin, la dépendance `file:` et le verrou npm du Starter sélectionnent les mêmes octets vérifiés (`sha256-f874f0ed29a41ec45b8f686884b5e2260b9600d9045588174fff8a7fcdd5eeec`). Le module métier 0.1.0 et son contrat pair `^1.0.0` ne changent pas ; l'application persistante de démonstration demande une transition Core/SDK distincte.
+
+Pour reproduire ce parcours dans un checkout propre sous PowerShell, exécuter `node ci/bootstrap-sdk.mjs`, puis `npm ci --ignore-scripts --no-audit --no-fund`, définir `$env:CREEZIO_SDK_TARBALL='.creezio/ci/creezio-sdk-1.1.0.tgz'` et lancer `node scripts/package.mjs`. La dernière commande exige un commit source propre afin de lier le manifeste et les archives à son SHA exact. Elle ne doit pas remplacer les archives déjà publiées de 0.1.0.
+
+La démo exige en plus un verrou Core/SDK réel décrivant la nouvelle archive ; son application persistante actuelle n'est pas mise à niveau par la seule adoption du SDK dans ce dépôt.
 
 Voir le [PRD](prd.md) et le [journal de version](CHANGELOG.md). Le dépôt source contient aussi les décisions, le suivi et les instructions de contribution réservés au développement.

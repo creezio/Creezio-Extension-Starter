@@ -14,6 +14,9 @@ const response=(body,headers={})=>{
 
 test('SDK pin accepts only the versioned public asset and full SHA-256',()=>{
   assert.deepEqual(validatePin(pin),pin);
+  assert.deepEqual(validatePin({...pin,url:url.replaceAll('1.0.0','1.1.0')}),
+    {...pin,url:url.replaceAll('1.0.0','1.1.0')});
+  assert.throws(()=>validatePin({...pin,url:url.replace('sdk-v1.0.0','sdk-v1.1.0')}));
   assert.throws(()=>validatePin({...pin,url:'https://github.com/creezio/Creezio-D1R2/releases/latest/download/creezio-sdk-1.0.0.tgz'}));
   assert.throws(()=>validatePin({...pin,integrity:'sha256-short'}));
   assert.throws(()=>validatePin({...pin,token:'not-allowed'}));
