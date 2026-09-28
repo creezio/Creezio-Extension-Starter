@@ -1,6 +1,6 @@
 # Suivi — première tranche T30
 
-Statuts factuels au 28 septembre 2026. Le SDK 1.1.0 est public depuis Core `f8dc03c` et le module 0.1.0 depuis Starter `527a1bc`. Le module 0.1.1 est publié ; ce checkout prépare la candidate 0.1.2 pour corriger la route de création front. La démo indépendante contient encore le candidat Starter `6d682f0` sur Core `5a5d3c9` et conserve ses données ; l'adoption des archives publiques exige une transition en place distincte.
+Statuts historiques au 28 septembre 2026 : le SDK 1.1.0 et les modules 0.1.0, 0.1.1 et 0.1.2 ont été publiés. Ce checkout prépare désormais 0.1.3 avec le journal public SDK 1.2.0, publié et épinglé par URL et SHA-256 dans la CI et le verrou du Starter. La démo et Lab conservent leur version et leurs données jusqu'à une transition explicite de l'hôte.
 
 | Travail | Responsable | État |
 |---|---|---|
@@ -22,3 +22,7 @@ Le pin public SDK 1.1.0, la dépendance et le verrou npm du Starter sont adopté
 ## Candidate — module 0.1.2
 
 Vérifier la route `/purchase-requests/new` dans le manifeste, la contribution front et la navigation du SDK public, y compris le refus de l'ancien chemin ambigu avec `/requests/{id}`. Passer les six suites, la revue et le build de provenance depuis un commit propre. Installer ensuite 0.1.2 sur l'hôte de recette en conservant les données ; la démo existante n'est pas modifiée par ce checkout. Enregistrer séparément dans le standard Starter le besoin de détecter les chevauchements entre chemins littéraux et paramétrés.
+
+## Candidate — module 0.1.3
+
+L'adoption du journal SDK 1.2 concerne uniquement les vues workspace/front. Les anciennes commandes incertaines restent consultables par leur statut sans nouveau scope inféré ni replay. Le SDK 1.2 **public** est fixé dans `ci/sdk-pin.json`, `package.json` et `package-lock.json` ; ses octets installés doivent être comparés à l'archive avant packaging. Produire un commit source propre, exécuter les six suites et qualifier l'archive fermée. La recette de mise à jour et de conservation des données de la démo est séparée ; aucun runtime, D1 ou R2 n'est modifié par cette branche.

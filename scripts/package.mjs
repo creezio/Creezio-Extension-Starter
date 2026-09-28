@@ -68,7 +68,8 @@ function sdkProof(packageJson){
   const sdkPath=confinedFile(root,'node_modules/@creezio/sdk/package.json');
   const installed=JSON.parse(readFileSync(sdkPath,'utf8'));
   try{assertSupportedSdk(installed);}catch(error){fail(error.message);}
-  if(packageJson.peerDependencies?.['@creezio/sdk']!=='^1.0.0')fail('SDK peer contract');
+  if(packageJson.peerDependencies?.['@creezio/sdk']!=='^1.2.0')fail('SDK peer contract');
+  if(installed.version!=='1.2.0')fail('Module 0.1.3 requires SDK 1.2.0.');
   const declared=process.env.CREEZIO_SDK_TARBALL;
   if(!declared||!declared.endsWith('.tgz'))fail('CREEZIO_SDK_TARBALL must identify the built SDK npm tarball');
   const tarball=path.resolve(root,declared);
@@ -83,12 +84,17 @@ function sdkProof(packageJson){
   try{archived=JSON.parse(manifest.bytes.toString('utf8'));assertSupportedSdk(archived);}
   catch(error){fail(`SDK tarball identity: ${error.message}`);}
   if(archived.version!==installed.version)fail('SDK tarball version differs from installation');
-  if(installed.version==='1.1.0'){
+  if(['1.1.0','1.2.0'].includes(installed.version)){
     for(const name of ['context','transport'])for(const file of [
       `package/dist/types/sdk/delivery/${name}.d.ts`,
       `package/dist/esm/delivery/${name}.js`]){
       if(!entries.some(entry=>entry.path===file))fail(`SDK tarball lacks ${file}`);
     }
+  }
+  if(installed.version==='1.2.0')for(const file of [
+    'package/dist/types/sdk/operations/command-journal.d.ts',
+    'package/dist/esm/operations/command-journal.js']){
+    if(!entries.some(entry=>entry.path===file))fail(`SDK tarball lacks ${file}`);
   }
   const installedRoot=path.join(root,'node_modules/@creezio/sdk');
   for(const entry of entries){

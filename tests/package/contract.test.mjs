@@ -10,13 +10,13 @@ import {canonicalJson,exactInventory,fileSnapshot,npmCommand,releaseOutputNames,
 
 const root=fileURLToPath(new URL('../../',import.meta.url));
 
-test('new release outputs cannot overwrite the public 0.1.0 or 0.1.1 receipts and checksums',()=>{
-  const names=releaseOutputNames('0.1.2');
+test('new release outputs cannot overwrite the public 0.1.0 through 0.1.2 receipts and checksums',()=>{
+  const names=releaseOutputNames('0.1.3');
   assert.deepEqual(names,{
-    runtime:'creezio-purchase-requests-0.1.2.tgz',
-    validation:'creezio-purchase-requests-0.1.2-validation.tgz',
-    receipt:'manifest-0.1.2.json',
-    checksums:'SHA512SUMS-0.1.2',
+    runtime:'creezio-purchase-requests-0.1.3.tgz',
+    validation:'creezio-purchase-requests-0.1.3-validation.tgz',
+    receipt:'manifest-0.1.3.json',
+    checksums:'SHA512SUMS-0.1.3',
   });
   assert.ok(!Object.values(names).some(name=>[
     'creezio-purchase-requests-0.1.0.tgz',
@@ -25,8 +25,11 @@ test('new release outputs cannot overwrite the public 0.1.0 or 0.1.1 receipts an
     'creezio-purchase-requests-0.1.1.tgz',
     'creezio-purchase-requests-0.1.1-validation.tgz',
     'manifest-0.1.1.json','SHA512SUMS-0.1.1',
+    'creezio-purchase-requests-0.1.2.tgz',
+    'creezio-purchase-requests-0.1.2-validation.tgz',
+    'manifest-0.1.2.json','SHA512SUMS-0.1.2',
   ].includes(name)));
-  assert.throws(()=>releaseOutputNames('../0.1.2'),/invalid module version/);
+  assert.throws(()=>releaseOutputNames('../0.1.3'),/invalid module version/);
 });
 
 test('widget assets read by the host are declared runtime files and public package exports',()=>{

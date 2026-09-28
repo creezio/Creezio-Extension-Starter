@@ -12,7 +12,7 @@ if(!/^[a-f0-9]{40}$|^[a-f0-9]{64}$/.test(sourceRevision??'')
   || !/^sha256-[a-f0-9]{64}$/.test(sourceIntegrity??''))
   throw new Error('A real pinned Git source revision and source digest are required.');
 
-const moduleId='creezio.purchase-requests',version='0.1.2';
+const moduleId='creezio.purchase-requests',version='0.1.3';
 const reviewSkill='plugin/skills/review-purchase-request/SKILL.md';
 const reviewSkillIntegrity=`sha256-${createHash('sha256').update(
   readFileSync(path.join(root,reviewSkill))).digest('hex')}`;
@@ -26,7 +26,8 @@ const object=(properties,required=Object.keys(properties))=>({type:'object',prop
 const array=(items,maxItems=50)=>({type:'array',items,maxItems});
 const id=string(128),requestKey=string(128),cursor=string(2048),timestamp=string(35);
 const request=object({id,title:string(240),description:string(4000,0),
-  amountMinor:integer(0,1_000_000_000_000),currency:{type:'string',pattern:'^[A-Z]{3}$'},
+  amountMinor:{...integer(0,1_000_000_000_000),description:'Montant en unité mineure de la devise, pas en unité majeure. Par exemple amountMinor=12345 et currency=EUR signifient 123,45 EUR.'},
+  currency:{type:'string',pattern:'^[A-Z]{3}$'},
   status:{type:'string',enum:['draft','submitted','withdrawn']},revision:integer(1),
   createdAt:timestamp,updatedAt:timestamp,submittedAt:optional(timestamp)});
 const staged=object({fileId:string(67),intentId:id,generation:id,digest:string(64,64)});
@@ -45,12 +46,15 @@ const requestGetOutput=object({request:optional(request)});
 const requestListOutput=object({items:array(request),nextCursor:optional(cursor)});
 const attachmentLinkOutput=object({attachment,requestRevision:integer(1)});
 const attachmentListOutput=object({items:array(attachment),nextCursor:optional(cursor)});
+const legacyPending=object({operationId:{type:'string',enum:Object.values(PURCHASE_OPERATIONS)},
+  requestKey:string(128),executionId:string(128)},['operationId','requestKey']);
+const journalPending=object({sessionId:id,audience:{type:'string',enum:['admin','app']},contextId:id,
+  bindingId:string(257),requestKey:string(128),intent:string(64),targetId:id},
+  ['sessionId','audience','contextId','bindingId','requestKey']);
 const panelState=object({version:{const:1},draft:object({title:string(240,0),description:string(4000,0),
   amountText:string(32,0),currency:{type:'string',pattern:'^[A-Z]{3}$'}}),
   baseRevision:optional(integer(1)),dirty:{type:'boolean'},
-  pending:optional(object({operationId:{type:'string',enum:Object.values(PURCHASE_OPERATIONS)},
-    requestKey:string(128),executionId:string(128)},
-    ['operationId','requestKey']))});
+  pending:{anyOf:[legacyPending,journalPending,{type:'null'}]}});
 const schemas=Object.entries({
   request,attachment,'staged-file':staged,
   'request-create-input':createInput,'request-list-input':listInput,'request-get-input':getInput,
@@ -197,7 +201,7 @@ const manifest={
     origin:'https://github.com/creezio/Creezio-Extension-Starter',version,
     source:{kind:'git',repository:'https://github.com/creezio/Creezio-Extension-Starter',
       revision:sourceRevision,integrity:sourceIntegrity},license:{expression:'MIT',file:'LICENSE'}},
-  compatibility:{core:'^0.0.0',sdk:'^1.0.0',
+  compatibility:{core:'^0.0.0',sdk:'^1.2.0',
     requiredCapabilities:['runtime.worker','data.d1.shared','files.r2.shared'],optionalCapabilities:[]},
   dependencies:[],
   entrypoints:{server:{path:'dist/module/entry.server.js',export:'purchaseRequests'},
