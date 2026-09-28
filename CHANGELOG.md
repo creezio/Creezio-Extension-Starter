@@ -1,6 +1,12 @@
 # Changelog
 
-## 0.1.1 — candidate T38
+## 0.1.2 — candidate
+
+- La vue de création front passe de `/requests/new` à `/purchase-requests/new` pour éliminer le chevauchement avec `/requests/{id}`.
+- Un test de navigation par le composant public `Workspace` du SDK constate l'ambiguïté de l'ancien chemin et valide le nouveau chemin et la fiche.
+- Les huit opérations, les modèles et le contrat pair SDK restent identiques ; les sorties de packaging sont nommées 0.1.2.
+
+## 0.1.1 — publié le 28 septembre 2026
 
 - Version de module et de plugin préparée pour tester la mise à jour individuelle depuis 0.1.0, sans nouvelle opération ni changement de modèle métier.
 - Les sorties de packaging prennent toutes un nom lié à la version : archives runtime/validation, reçu et sommes SHA-512. Les fichiers publics de 0.1.0 conservent leurs noms et octets.

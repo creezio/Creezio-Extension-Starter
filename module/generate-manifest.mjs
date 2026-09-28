@@ -12,7 +12,7 @@ if(!/^[a-f0-9]{40}$|^[a-f0-9]{64}$/.test(sourceRevision??'')
   || !/^sha256-[a-f0-9]{64}$/.test(sourceIntegrity??''))
   throw new Error('A real pinned Git source revision and source digest are required.');
 
-const moduleId='creezio.purchase-requests',version='0.1.1';
+const moduleId='creezio.purchase-requests',version='0.1.2';
 const reviewSkill='plugin/skills/review-purchase-request/SKILL.md';
 const reviewSkillIntegrity=`sha256-${createHash('sha256').update(
   readFileSync(path.join(root,reviewSkill))).digest('hex')}`;
@@ -164,7 +164,7 @@ const view=(id,title,route,component,operations,input,panelState=false)=>({id,ti
     navigation:'sdk',retention:'preserve',inactiveEffects:'suspend'}});
 const views=[
   view('list','Mes demandes','/requests','purchaseRequestsList',['request.list'],'view-list-input'),
-  view('new','Nouvelle demande','/requests/new','purchaseRequestNew',['request.create'],
+  view('new','Nouvelle demande','/purchase-requests/new','purchaseRequestNew',['request.create'],
     'view-new-input',true),
   view('detail','Demande','/requests/{id}','purchaseRequestDetail',
     ['request.get','request.update','request.submit','request.withdraw','attachment.link','attachment.list'],
