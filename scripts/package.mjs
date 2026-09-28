@@ -237,6 +237,17 @@ function writeOnce(target,bytes){
   finally{if(existsSync(temporary))unlinkSync(temporary);}
 }
 
+export function releaseOutputNames(version){
+  if(typeof version!=='string'||!/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/.test(version))
+    fail('invalid module version for output names');
+  return {
+    runtime:`creezio-purchase-requests-${version}.tgz`,
+    validation:`creezio-purchase-requests-${version}-validation.tgz`,
+    receipt:`manifest-${version}.json`,
+    checksums:`SHA512SUMS-${version}`,
+  };
+}
+
 export function packageRelease(){
   const pack=JSON.parse(readFileSync(confinedFile(root,'package.json'),'utf8'));
   const sdk=sdkProof(pack);
@@ -249,6 +260,7 @@ export function packageRelease(){
   command(process.execPath,['gate.mjs']);
   verifySnapshot(runtimeSnapshot,manifest.packaging.runtime.files,root);
   sourceProof(manifest);
+  const names=releaseOutputNames(pack.version);
   const outputParent=path.join(root,'.creezio');
   if(existsSync(outputParent)&&lstatSync(outputParent).isSymbolicLink())fail('linked output parent');
   const packageDir=path.join(root,output);
@@ -256,8 +268,8 @@ export function packageRelease(){
   mkdirSync(packageDir,{recursive:true});
   const staging=path.join(packageDir,`.staging-${process.pid}`);
   mkdirSync(staging);
-  const runtimeName='creezio-purchase-requests-0.1.0.tgz';
-  const validationName='creezio-purchase-requests-0.1.0-validation.tgz';
+  const runtimeName=names.runtime;
+  const validationName=names.validation;
   try{
     const npm=npmCommand();
     const outputJson=command(npm.program,[...npm.prefix,'pack','--json','--ignore-scripts','--offline',
@@ -279,8 +291,8 @@ export function packageRelease(){
     const checksums=`${sha512(runtimeBytes)}  ${runtimeName}\n${sha512(validationBytes)}  ${validationName}\n`;
     writeOnce(path.join(packageDir,runtimeName),runtimeBytes);
     writeOnce(path.join(packageDir,validationName),validationBytes);
-    writeOnce(path.join(packageDir,'manifest.json'),Buffer.from(`${JSON.stringify(detached,null,2)}\n`));
-    writeOnce(path.join(packageDir,'SHA512SUMS'),Buffer.from(checksums));
+    writeOnce(path.join(packageDir,names.receipt),Buffer.from(`${JSON.stringify(detached,null,2)}\n`));
+    writeOnce(path.join(packageDir,names.checksums),Buffer.from(checksums));
     return {receipt:detached,sha512:checksums.trim().split('\n'),revision,sdk};
   }finally{
     for(const name of readdirSync(staging)){

@@ -1,7 +1,10 @@
 # Changelog
 
-## En cours — adoption du SDK 1.1.0 public
+## 0.1.1 — candidate T38
 
+- Version de module et de plugin préparée pour tester la mise à jour individuelle depuis 0.1.0, sans nouvelle opération ni changement de modèle métier.
+- Les sorties de packaging prennent toutes un nom lié à la version : archives runtime/validation, reçu et sommes SHA-512. Les fichiers publics de 0.1.0 conservent leurs noms et octets.
+- La démo persistante reste fixée aux archives publiques 0.1.0 jusqu'à sa transition explicite.
 - Le pin CI, la dépendance npm et le workflow sélectionnent le SDK public `sdk-v1.1.0` depuis Core `f8dc03c6076109479ad87facedc55234a343dcc4`, SHA-256 `f874f0ed29a41ec45b8f686884b5e2260b9600d9045588174fff8a7fcdd5eeec`.
 - Les scripts de build, packaging, bootstrap CI et démo vérifient les exports `delivery/context` et `delivery/transport`, l'identité du tarball et la version de la composition Core. Le contrat pair `^1.0.0` reste compatible ; les archives publiques du module 0.1.0 et l'application persistante de démo ne sont pas remplacées par cette adoption.
 

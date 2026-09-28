@@ -12,7 +12,7 @@ if(!/^[a-f0-9]{40}$|^[a-f0-9]{64}$/.test(sourceRevision??'')
   || !/^sha256-[a-f0-9]{64}$/.test(sourceIntegrity??''))
   throw new Error('A real pinned Git source revision and source digest are required.');
 
-const moduleId='creezio.purchase-requests',version='0.1.0';
+const moduleId='creezio.purchase-requests',version='0.1.1';
 const reviewSkill='plugin/skills/review-purchase-request/SKILL.md';
 const reviewSkillIntegrity=`sha256-${createHash('sha256').update(
   readFileSync(path.join(root,reviewSkill))).digest('hex')}`;
