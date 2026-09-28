@@ -4,9 +4,9 @@
 - `module/models.ts` : modèles `request`, `file_metadata`, `request_attachment`, sans SQL ni migration dans le paquet.
 - `module/operations.ts` : handlers SDK publics, contrôle de propriétaire/contexte, révision attendue et plans D1/R2.
 - `module/generate-manifest.mjs` et `module/manifest.json` : déclaration complète générée avec provenance Git/intégrité réelles ; la catégorie privée `request-attachment` partage son propriétaire principal entre audiences autorisées.
-- `ui/` : vues workspace/front, états de formulaire et composants publics.
+- `ui/` : vues workspace/front, états de formulaire et composants publics ; la création front utilise `/purchase-requests/new`.
 - `plugin/` : manifeste, configuration MCP, contribution et skill de lecture des demandes ; les ressources/widgets HTML sont dans `ui/widgets/`.
-- `tests/` : six familles de contrôles backend/ui/api-mcp/widgets/package/docs.
+- `tests/` : six familles de contrôles backend/ui/api-mcp/widgets/package/docs ; la suite UI vérifie la navigation réelle via le composant public `Workspace` du SDK.
 - `ci/bootstrap-sdk.mjs`, `ci/bootstrap-sdk.test.mjs` et `ci/sdk-pin.json` : téléchargement borné de la release publique SDK 1.1.0, vérification SHA-256 et tests de refus ; `ci/run-suite.mjs` contrôle les six familles.
 - `.github/workflows/package.yml` et `package-lock.json` : CI sur le head exact de PR ou push, dépendances npm figées et empaquetage unique.
 - `skills/development/` : cinq guides locaux de développement liés à la révision publique `e6763663` du socle ; distincts du skill conversationnel distribué.

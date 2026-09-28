@@ -1,6 +1,6 @@
 {
   "name": "@creezio/purchase-requests",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Module Creezio de demandes d’achat, avec vues et widgets MCP Apps.",
   "type": "module",
   "license": "MIT",
