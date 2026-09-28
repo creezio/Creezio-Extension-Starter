@@ -1,6 +1,6 @@
 {
   "name": "creezio-purchase-requests",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Demandes d’achat personnelles avec outils MCP et widgets portables ; aucune approbation ni paiement implicite.",
   "mcpServers": {}
 }

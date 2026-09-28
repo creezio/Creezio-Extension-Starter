@@ -1,6 +1,8 @@
-# PRD — Demandes d'achat 0.1.0
+# PRD — Demandes d'achat 0.1.1
 
 T30 / US30 / REQ3001–3004. Un développeur part de ce dépôt pour produire une extension complète conforme au standard Creezio, installable sans accès au checkout source du CMS ou du module. La première tranche fournit un exemple utilisable, sans catalogue de fournisseurs ni approbation budgétaire.
+
+La candidate 0.1.1 reprend le périmètre métier publié en 0.1.0. Son incrément de version sert à la recette de mise à jour individuelle T38.
 
 Un utilisateur autorisé crée un brouillon avec titre (240 caractères au plus), description (4 000 au plus), montant entier entre 0 et 1 000 000 000 000 unités mineures et devise à trois lettres. Il retrouve sa liste paginée (50 éléments au plus), ouvre une fiche, modifie un brouillon sous contrôle de révision et ajoute des pièces jointes privées de 10 Mo au plus. `request.submit` fait passer `draft` à `submitted` ; `request.withdraw` fait passer `submitted` à `withdrawn`. Soumettre ne réalise aucun achat. Il n'existe ni retrait d'un brouillon, ni suppression, ni validation budgétaire dans cette tranche. Les identités et contextes viennent de l'hôte ; fournir un identifiant arbitraire ne donne aucun accès. Une révision périmée échoue explicitement. Une réponse de mutation perdue est vérifiée par la même `requestKey` d'idempotence avant toute nouvelle tentative.
 
