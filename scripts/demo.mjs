@@ -6,6 +6,7 @@ import {existsSync,lstatSync,mkdirSync,readFileSync,statfsSync,writeFileSync,cop
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {gunzipSync} from 'node:zlib';
+import semver from 'semver';
 import {tarFiles} from './package.mjs';
 import {assertSupportedSdk,sdkArchiveName} from './sdk-version.mjs';
 
@@ -17,9 +18,16 @@ const sourceStamp=path.join(app,'.creezio','demo-source.json');
 const installStamp=path.join(app,'.creezio','demo-install.json');
 const compositionPath='configuration/composition.t30-demo.json';
 const inventoryPath='configuration/module-inventory.json';
-const receiptPath='.creezio/packages/manifest.json';
 const sdkSpec=version=>`file:.creezio/packages/${sdkArchiveName(version)}`;
-const moduleSpec='file:.creezio/packages/creezio-purchase-requests-0.1.0.tgz';
+export function moduleArtifactNames(version){
+  if(!exactModuleVersion(version))fail('unsupported module version');
+  return {runtime:`creezio-purchase-requests-${version}.tgz`,
+    validation:`creezio-purchase-requests-${version}-validation.tgz`,
+    receipt:version==='0.1.0'?'manifest.json':`manifest-${version}.json`};
+}
+const moduleSpec=version=>`file:.creezio/packages/${moduleArtifactNames(version).runtime}`;
+const receiptPath=version=>`.creezio/packages/${moduleArtifactNames(version).receipt}`;
+export const moduleVersionRange=lock=>lock.legacyModuleVersion?'^0.1.0':lock.module.version;
 const moduleId='creezio.purchase-requests';
 const moduleOrigin='https://github.com/creezio/Creezio-Extension-Starter';
 const sha=bytes=>`sha256-${createHash('sha256').update(bytes).digest('hex')}`;
@@ -32,6 +40,8 @@ const safeRelative=value=>typeof value==='string'&&value.length>0&&value.length<
   &&!/[\u0000-\u001f\u007f<>|?*]/.test(value)
   &&value.split('/').every(part=>part&&part!=='.'&&part!=='..'&&!/[. ]$/.test(part)
     &&!/^(con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\.|$)/i.test(part));
+const exactModuleVersion=value=>typeof value==='string'&&value.length<=64
+  &&semver.valid(value)===value&&safeRelative(value);
 
 function regular(base,relative){
   if(!safeRelative(relative))fail(`unsafe path: ${relative}`);
@@ -84,6 +94,9 @@ function externalFile(file){
 export function checkedSourceLock(lock,sdkArchive){
   // T30 locks predate the version field. Their local SDK tarball must still prove 1.0.0.
   const sdkVersion=lock?.sdk?.version??(lock?.sdk?.url===undefined?'1.0.0':null);
+  // Older module locks name only the 0.1.0 archives; their verified receipt and tarball prove it.
+  const legacyModuleVersion=!Object.hasOwn(lock?.module??{},'version');
+  const moduleVersion=legacyModuleVersion?'0.1.0':lock.module.version;
   if(!lock||lock.schemaVersion!==1||!revision.test(lock.core?.revision)
     ||lock.core.repository!=='https://github.com/creezio/Creezio-D1R2'
     ||lock.core.url!==`https://codeload.github.com/creezio/Creezio-D1R2/tar.gz/${lock.core.revision}`
@@ -91,9 +104,11 @@ export function checkedSourceLock(lock,sdkArchive){
     ||!['1.0.0','1.1.0','1.2.0'].includes(sdkVersion)
     ||(lock.sdk.url!==undefined&&lock.sdk.url!==`https://github.com/creezio/Creezio-D1R2/releases/download/sdk-v${sdkVersion}/${sdkArchiveName(sdkVersion)}`)
     ||(!lock.sdk.url&&!sdkArchive)
+    ||!exactModuleVersion(moduleVersion)
     ||!hex.test(lock.module?.runtimeIntegrity)||!hex.test(lock.module?.validationIntegrity)
     ||!hex.test(lock.module?.receiptIntegrity))fail('invalid source lock');
-  return {...lock,sdk:{...lock.sdk,version:sdkVersion}};
+  return {...lock,sdk:{...lock.sdk,version:sdkVersion},
+    module:{...lock.module,version:moduleVersion},legacyModuleVersion};
 }
 function sourceLock(file,sdkArchive){
   if(!existsSync(file))fail('real demo source lock is required');
@@ -213,6 +228,35 @@ export function assertDemoSdkArchive(sdkEntries,version){
     if(!sdkEntries.some(entry=>entry.path===file))fail(`SDK archive lacks ${file}`);
   }
 }
+export function assertDemoModuleArchive(entries,receipt){
+  let pack,manifest;
+  try{
+    pack=JSON.parse(entries.find(entry=>entry.path==='package/package.json')?.bytes.toString('utf8'));
+    manifest=JSON.parse(entries.find(entry=>entry.path==='package/module/manifest.json')?.bytes.toString('utf8'));
+  }catch{fail('module archive lacks valid package or manifest');}
+  const source=receipt.module.source;
+  if(pack?.name!=='@creezio/purchase-requests'||pack.version!==receipt.module.version
+    ||manifest?.identity?.id!==moduleId||manifest.identity.version!==receipt.module.version
+    ||manifest.identity.source?.kind!==source.kind
+    ||manifest.identity.source.repository!==source.repository
+    ||manifest.identity.source.revision!==source.revision
+    ||manifest.identity.source.integrity!==source.integrity)
+    fail('module archive identity differs from source lock');
+}
+export function assertDemoModuleReceipt(receipt,lock){
+  const names=moduleArtifactNames(lock.module.version);
+  if(receipt?.module?.id!==moduleId||receipt.module.origin!==moduleOrigin
+    ||receipt.module.version!==lock.module.version
+    ||receipt.module.source?.kind!=='git'
+    ||receipt.module.source.repository!==moduleOrigin
+    ||!revision.test(receipt.module.source.revision)
+    ||!hex.test(receipt.module.source.integrity)
+    ||receipt.runtime?.integrity!==lock.module.runtimeIntegrity
+    ||receipt.validation?.integrity!==lock.module.validationIntegrity
+    ||receipt.runtime?.location?.path!==`.creezio/packages/${names.runtime}`
+    ||receipt.validation?.location?.path!==`.creezio/packages/${names.validation}`)
+    fail('detached receipt disagrees with locked archives');
+}
 async function placePackages(lock,sdkArchive){
   const packageDir=directory(app,'.creezio/packages');
   const rootPackages='.creezio/packages';
@@ -221,16 +265,17 @@ async function placePackages(lock,sdkArchive){
   else await downloadExact(lock.sdk.url,sdkTarget,lock.sdk.integrity);
   const sdkEntries=tarFiles(readFileSync(sdkTarget));
   assertDemoSdkArchive(sdkEntries,lock.sdk.version);
+  const names=moduleArtifactNames(lock.module.version);
   for(const [name,digest] of [
-    ['creezio-purchase-requests-0.1.0.tgz',lock.module.runtimeIntegrity],
-    ['creezio-purchase-requests-0.1.0-validation.tgz',lock.module.validationIntegrity],
-    ['manifest.json',lock.module.receiptIntegrity]]){
+    [names.runtime,lock.module.runtimeIntegrity],
+    [names.validation,lock.module.validationIntegrity],
+    [names.receipt,lock.module.receiptIntegrity]]){
     copyExact(regular(root,`${rootPackages}/${name}`),path.join(packageDir,name),digest);
   }
-  const receipt=json(regular(app,receiptPath));
-  if(receipt.module?.id!==moduleId||receipt.module?.version!=='0.1.0'
-    ||receipt.runtime?.integrity!==lock.module.runtimeIntegrity
-    ||receipt.validation?.integrity!==lock.module.validationIntegrity)fail('detached receipt disagrees with locked archives');
+  const receipt=json(regular(app,receiptPath(lock.module.version)));
+  assertDemoModuleReceipt(receipt,lock);
+  assertDemoModuleArchive(tarFiles(readFileSync(regular(app,`${rootPackages}/${names.runtime}`))),
+    receipt);
 }
 function verifyInstalled(name,archive){
   const bytes=readFileSync(archive);
@@ -244,36 +289,45 @@ function verifyInstalled(name,archive){
 function configurePackageDependencies(lock){
   const file=regular(app,'package.json'),pack=json(file);
   const selectedSdkSpec=sdkSpec(lock.sdk.version);
+  const selectedModuleSpec=moduleSpec(lock.module.version);
   if(pack.name!=='creezio-d1r2'||pack.private!==true
     ||pack.workspaces&&JSON.stringify(pack.workspaces)!=='["sdk"]'
     ||pack.devDependencies?.['@creezio/sdk']&&pack.devDependencies['@creezio/sdk']!==selectedSdkSpec
-    ||pack.dependencies?.['@creezio/purchase-requests']&&pack.dependencies['@creezio/purchase-requests']!==moduleSpec)
+    ||pack.dependencies?.['@creezio/purchase-requests']&&pack.dependencies['@creezio/purchase-requests']!==selectedModuleSpec)
     fail('unexpected demo package dependencies');
   // This application installs the verified SDK archive, not Core's local SDK workspace link.
   delete pack.workspaces;
   pack.devDependencies={...pack.devDependencies,'@creezio/sdk':selectedSdkSpec};
-  pack.dependencies={...pack.dependencies,'@creezio/purchase-requests':moduleSpec};
+  pack.dependencies={...pack.dependencies,'@creezio/purchase-requests':selectedModuleSpec};
   const bytes=Buffer.from(`${JSON.stringify(pack,null,2)}\n`);
   if(!readFileSync(file).equals(bytes))writeFileSync(file,bytes);
 }
-function verifyDependencyLock(source){
-  const pack=json(regular(app,'package.json')),lock=json(regular(app,'package-lock.json'));
+export function assertDemoDependencySelection(pack,lock,source,archives){
   const selectedSdkSpec=sdkSpec(source.sdk.version);
+  const selectedModuleSpec=moduleSpec(source.module.version);
   if(pack.workspaces!==undefined||pack.devDependencies?.['@creezio/sdk']!==selectedSdkSpec
-    ||pack.dependencies?.['@creezio/purchase-requests']!==moduleSpec
+    ||pack.dependencies?.['@creezio/purchase-requests']!==selectedModuleSpec
     ||lock.packages?.['']?.workspaces!==undefined
     ||lock.packages[''].devDependencies?.['@creezio/sdk']!==selectedSdkSpec
-    ||lock.packages[''].dependencies?.['@creezio/purchase-requests']!==moduleSpec)
+    ||lock.packages[''].dependencies?.['@creezio/purchase-requests']!==selectedModuleSpec)
     fail('demo package lock does not select the archives');
   for(const [name,spec,version] of [
     ['@creezio/sdk',selectedSdkSpec,source.sdk.version],
-    ['@creezio/purchase-requests',moduleSpec,'0.1.0']]){
+    ['@creezio/purchase-requests',selectedModuleSpec,source.module.version]]){
     const entry=lock.packages[`node_modules/${name}`];
-    const archive=regular(app,spec.slice('file:'.length));
-    const integrity=`sha512-${createHash('sha512').update(readFileSync(archive)).digest('base64')}`;
+    const bytes=archives[name];
+    if(!(bytes instanceof Uint8Array))fail(`missing pinned ${name} archive bytes`);
+    const integrity=`sha512-${createHash('sha512').update(bytes).digest('base64')}`;
     if(!entry||entry.link===true||entry.version!==version||entry.resolved!==spec
       ||entry.integrity!==integrity)fail(`demo package lock differs from ${name} archive`);
   }
+}
+function verifyDependencyLock(source){
+  const pack=json(regular(app,'package.json')),lock=json(regular(app,'package-lock.json'));
+  assertDemoDependencySelection(pack,lock,source,{
+    '@creezio/sdk':readFileSync(regular(app,sdkSpec(source.sdk.version).slice('file:'.length))),
+    '@creezio/purchase-requests':readFileSync(regular(app,moduleSpec(source.module.version).slice('file:'.length)))
+  });
 }
 
 function configure(lock){
@@ -281,7 +335,8 @@ function configure(lock){
   if(selected.sdk?.version!==lock.sdk.version)fail('Core composition SDK version differs from source lock');
   const witness=selected.modules.findIndex(item=>item.moduleId==='example.widgets-witness');
   if(witness<0||selected.modules.some(item=>item.moduleId===moduleId))fail('unexpected base widget composition');
-  selected.modules.splice(witness,1,{moduleId,origin:moduleOrigin,versionRange:'^0.1.0',
+  selected.modules.splice(witness,1,{moduleId,origin:moduleOrigin,
+    versionRange:moduleVersionRange(lock),
     source:{kind:'package',name:'@creezio/purchase-requests'},enabled:true,configuration:[],integrations:[]});
   for(const audience of ['admin','app']){
     const ids=selected.exposure?.[audience]?.moduleIds;
@@ -293,9 +348,9 @@ function configure(lock){
     ||inventory.allowedOrigins.some(origin=>![moduleOrigin,'https://github.com/creezio/Creezio-D1R2'].includes(origin))
     ||!Array.isArray(inventory.available)||inventory.available.length!==0
     ||inventory.validationReceipts&&Object.keys(inventory.validationReceipts).some(id=>id!==moduleId
-      ||inventory.validationReceipts[id]!==receiptPath))fail('module inventory differs from the pinned demo base');
+      ||inventory.validationReceipts[id]!==receiptPath(lock.module.version)))fail('module inventory differs from the pinned demo base');
   inventory.allowedOrigins=[...new Set([...inventory.allowedOrigins,moduleOrigin])];
-  inventory.validationReceipts={[moduleId]:receiptPath};
+  inventory.validationReceipts={[moduleId]:receiptPath(lock.module.version)};
   for(const [name,value] of [[compositionPath,selected],[inventoryPath,inventory]]){
     const target=path.join(app,...name.split('/'));
     const bytes=Buffer.from(`${JSON.stringify(value,null,2)}\n`);
@@ -310,13 +365,20 @@ function configure(lock){
 }
 
 /** Install the exact archives without running the composed application build. */
+export function assertDemoInstallStamp(stamp,lock){
+  if(stamp.sourceRevision!==lock.core.revision||stamp.sdkIntegrity!==lock.sdk.integrity
+    ||stamp.moduleIntegrity!==lock.module.runtimeIntegrity)fail('installed app differs from pinned archives');
+}
 export async function prepareDependencies(options){
   const lock=sourceLock(options.sourceLock,options.sdkArchive);
   const sdkPath=`.creezio/packages/${sdkArchiveName(lock.sdk.version)}`;
+  const modulePath=`.creezio/packages/${moduleArtifactNames(lock.module.version).runtime}`;
   await acquireSource(lock);
   if(existsSync(path.join(app,'.wrangler','creezio-local.lock')))fail('local application is in use');
+  const installed=existsSync(installStamp);
+  if(installed)assertDemoInstallStamp(json(regular(app,'.creezio/demo-install.json')),lock);
   await placePackages(lock,options.sdkArchive);
-  if(!existsSync(installStamp)){
+  if(!installed){
     disk();
     const modules=path.join(app,'node_modules');
     if(existsSync(modules)){
@@ -327,23 +389,20 @@ export async function prepareDependencies(options){
     // An interrupted preparation reuses node_modules and repairs it incrementally.
     npm(['install','--workspaces=false'],app);
     verifyInstalled('@creezio/sdk',path.join(app,sdkPath));
-    verifyInstalled('@creezio/purchase-requests',path.join(app,'.creezio/packages/creezio-purchase-requests-0.1.0.tgz'));
+    verifyInstalled('@creezio/purchase-requests',path.join(app,modulePath));
     directory(app,'.creezio');
     writeJson(installStamp,{sourceRevision:lock.core.revision,sdkIntegrity:lock.sdk.integrity,
       moduleIntegrity:lock.module.runtimeIntegrity});
-  }else{
-    const stamp=json(regular(app,'.creezio/demo-install.json'));
-    if(stamp.sourceRevision!==lock.core.revision||stamp.sdkIntegrity!==lock.sdk.integrity
-      ||stamp.moduleIntegrity!==lock.module.runtimeIntegrity)fail('installed app differs from pinned archives');
   }
   verifyDependencyLock(lock);
   verifyInstalled('@creezio/sdk',path.join(app,sdkPath));
   const installedSdk=json(regular(app,'node_modules/@creezio/sdk/package.json'));
   if(installedSdk.version!==lock.sdk.version)fail('installed SDK version differs from source lock');
   try{assertSupportedSdk(installedSdk);}catch(error){fail(error.message);}
-  verifyInstalled('@creezio/purchase-requests',path.join(app,'.creezio/packages/creezio-purchase-requests-0.1.0.tgz'));
+  verifyInstalled('@creezio/purchase-requests',path.join(app,modulePath));
   const installedModule=json(regular(app,'node_modules/@creezio/purchase-requests/package.json'));
-  if(installedModule.name!=='@creezio/purchase-requests'||installedModule.version!=='0.1.0')fail('installed module identity');
+  if(installedModule.name!=='@creezio/purchase-requests'||installedModule.version!==lock.module.version)
+    fail('installed module identity');
   return lock;
 }
 
@@ -351,7 +410,7 @@ async function prepare(options){
   const lock=await prepareDependencies(options);
   configure(lock);
   command(process.execPath,['scripts/modules/lock.mjs','--composition',compositionPath,
-    '--inventory',inventoryPath,'--validation-receipt',`${moduleId}=${receiptPath}`,'--write'],app);
+    '--inventory',inventoryPath,'--validation-receipt',`${moduleId}=${receiptPath(lock.module.version)}`,'--write'],app);
   const env={...process.env,CREEZIO_COMPOSITION:compositionPath,
     CREEZIO_COMPOSITION_LOCK:compositionPath.replace(/\.json$/,'.lock.json')};
   command(process.execPath,['scripts/build/compose-runtime.mjs'],app,env);

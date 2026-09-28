@@ -19,16 +19,17 @@ Le verrou source a ce format :
     "integrity": "sha256-<digest réel de l’archive SDK>"
   },
   "module": {
+    "version": "<version exacte de l’archive validée du module>",
     "runtimeIntegrity": "sha256-<digest du paquet runtime>",
     "validationIntegrity": "sha256-<digest de la validation détachée>",
-    "receiptIntegrity": "sha256-<digest du reçu manifest.json>"
+    "receiptIntegrity": "sha256-<digest du reçu de cette version>"
   }
 }
 ```
 
-Pour qualifier un SDK candidat non publié, omettre `sdk.url` et passer `--sdk-archive`. Les SDK 1.1.0 et 1.2.0 sont publics ; leur URL de release doit correspondre à la version et à l'empreinte vérifiées dans le verrou. Les archives runtime, validation et reçu publics du module 0.1.0 dans `.creezio/packages/` proviennent de `module-v0.1.0` ; leur adoption ne les reconstruit pas. Leurs empreintes doivent correspondre au verrou. L’archive SDK n’est jamais copiée dans Git.
+Pour qualifier un SDK candidat non publié, omettre `sdk.url` et passer `--sdk-archive`. Les SDK 1.1.0 et 1.2.0 sont publics ; leur URL de release doit correspondre à la version et à l'empreinte vérifiées dans le verrou. Le module doit désigner sa version SemVer exacte, sans alias ni normalisation, et les trois empreintes des archives et du reçu de cette version. `0.1.0` conserve le reçu historique `manifest.json` ; les versions suivantes utilisent `manifest-<version>.json`. Les anciens verrous sans `module.version` ne sélectionnent que 0.1.0, vérifié dans son reçu et son archive. L’archive SDK n’est jamais copiée dans Git.
 
-La version SDK du verrou détermine exactement le nom `creezio-sdk-<version>.tgz`, la dépendance npm locale et la version attendue dans le paquet installé. Les anciens verrous T30 sans ce champ ne sont acceptés qu'avec une archive locale dont le manifeste prouve `1.0.0` ; une URL de release sans version explicite est refusée. Pour 1.1.0 et 1.2.0, le paquet doit exposer `delivery/context` et `delivery/transport` ; 1.2.0 doit aussi exposer `operations/command-journal`. La composition de l'archive Core doit déclarer cette même version. Renseigner le SHA public final du Core et le SHA-256 de son archive après intégration ; la révision de la PR n'est pas automatiquement celle de `main`. Une application `demo/app/` déjà épinglée à une autre révision est refusée et doit suivre une transition en place revue séparément, qui conserve ses D1/R2 et ses fichiers.
+La version SDK du verrou détermine exactement le nom `creezio-sdk-<version>.tgz`, la dépendance npm locale et la version attendue dans le paquet installé. Les anciens verrous T30 sans ce champ ne sont acceptés qu'avec une archive locale dont le manifeste prouve `1.0.0` ; une URL de release sans version explicite est refusée. Pour 1.1.0 et 1.2.0, le paquet doit exposer `delivery/context` et `delivery/transport` ; 1.2.0 doit aussi exposer `operations/command-journal`. La composition de l'archive Core doit déclarer cette même version. Renseigner le SHA public final du Core et le SHA-256 de son archive après intégration ; la révision de la PR n'est pas automatiquement celle de `main`. Une application `demo/app/` déjà épinglée à une autre source ou à d'autres archives est refusée avant téléchargement/copie et doit suivre une transition en place revue séparément, qui conserve ses D1/R2 et ses fichiers.
 
 La préparation vérifie les octets de l’archive source publique avant extraction, refuse les liens et chemins sortants, réutilise `demo/app/` si sa provenance correspond, installe les archives vérifiées, puis compare les fichiers installés aux tarballs. Elle choisit le module via `source.kind=package` dans la composition de l’application réelle, avec les widgets fiche et sélection, et demande au verrou central son reçu de validation détaché. Le build passe par les commandes du socle. L’état local D1/R2 reste dans cette application ; il n’est ni exporté ni réinitialisé par la préparation.
 

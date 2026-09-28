@@ -1,7 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {createHash} from 'node:crypto';
 import {gzipSync} from 'node:zlib';
-import {assertDemoSdkArchive,checkedSourceLock,sourceEntries} from '../../scripts/demo.mjs';
+import {assertDemoDependencySelection,assertDemoInstallStamp,assertDemoModuleArchive,
+  assertDemoModuleReceipt,assertDemoSdkArchive,checkedSourceLock,moduleArtifactNames,
+  moduleVersionRange,sourceEntries}
+  from '../../scripts/demo.mjs';
 
 const revision='a'.repeat(40);
 function header(name,size,type){
@@ -43,6 +47,8 @@ test('legacy T30 lock selects only a verified SDK 1.0 archive',()=>{
     integrity},sdk:{integrity},module:{runtimeIntegrity:integrity,
     validationIntegrity:integrity,receiptIntegrity:integrity}};
   assert.equal(checkedSourceLock(lock,'local-sdk.tgz').sdk.version,'1.0.0');
+  assert.equal(checkedSourceLock(lock,'local-sdk.tgz').module.version,'0.1.0');
+  assert.equal(moduleVersionRange(checkedSourceLock(lock,'local-sdk.tgz')),'^0.1.0');
   assert.equal(lock.sdk.version,undefined);
   const entries=[{path:'package/package.json',bytes:Buffer.from(JSON.stringify({
     name:'@creezio/sdk',version:'1.0.0'}))}];
@@ -77,4 +83,105 @@ test('demo accepts an explicitly pinned SDK 1.2 only with the public journal fil
     {path:'package/dist/esm/operations/command-journal.js',bytes:Buffer.from('public')}];
   assert.doesNotThrow(()=>assertDemoSdkArchive(entries,'1.2.0'));
   assert.throws(()=>assertDemoSdkArchive(entries.slice(0,-1),'1.2.0'),/command-journal/);
+});
+
+test('module version selects exact archive names; a missing legacy version means only 0.1.0',()=>{
+  const integrity=`sha256-${'a'.repeat(64)}`;
+  const base={schemaVersion:1,core:{repository:'https://github.com/creezio/Creezio-D1R2',
+    revision,url:`https://codeload.github.com/creezio/Creezio-D1R2/tar.gz/${revision}`,
+    integrity},sdk:{version:'1.2.0',integrity,
+      url:'https://github.com/creezio/Creezio-D1R2/releases/download/sdk-v1.2.0/creezio-sdk-1.2.0.tgz'},
+    module:{version:'0.1.3',runtimeIntegrity:integrity,validationIntegrity:integrity,
+      receiptIntegrity:integrity}};
+  assert.equal(checkedSourceLock(base).module.version,'0.1.3');
+  assert.equal(moduleVersionRange(checkedSourceLock(base)),'0.1.3');
+  assert.deepEqual(moduleArtifactNames('0.1.3'),{
+    runtime:'creezio-purchase-requests-0.1.3.tgz',
+    validation:'creezio-purchase-requests-0.1.3-validation.tgz',
+    receipt:'manifest-0.1.3.json'});
+  assert.equal(checkedSourceLock({...base,module:{...base.module,version:'0.2.0'}})
+    .module.version,'0.2.0');
+  assert.equal(moduleArtifactNames('0.2.0-rc.1').runtime,
+    'creezio-purchase-requests-0.2.0-rc.1.tgz');
+  const legacy={...base,module:{...base.module}};
+  delete legacy.module.version;
+  assert.equal(checkedSourceLock(legacy).module.version,'0.1.0');
+  assert.equal(moduleVersionRange(checkedSourceLock(legacy)),'^0.1.0');
+  assert.equal(moduleArtifactNames('0.1.0').receipt,'manifest.json');
+  assert.throws(()=>checkedSourceLock({...base,module:{...base.module,version:'^1.0.0'}}),
+    /invalid source lock/);
+  assert.throws(()=>checkedSourceLock({...base,module:{...base.module,version:null}}),
+    /invalid source lock/);
+  for(const invalid of ['../0.2.0','0.2.0/../bad','0.2.0-../bad','v0.2.0',
+    '0.2.0+build','0.02.0']){
+    assert.throws(()=>moduleArtifactNames(invalid),/unsupported module version/);
+  }
+});
+
+test('an installed app rejects a different module pin before copying new packages',()=>{
+  const integrity=value=>`sha256-${value.repeat(64)}`;
+  const lock={core:{revision},sdk:{integrity:integrity('a')},
+    module:{version:'0.1.3',runtimeIntegrity:integrity('b')}};
+  const stamp={sourceRevision:revision,sdkIntegrity:integrity('a'),
+    moduleIntegrity:integrity('c')};
+  assert.throws(()=>assertDemoInstallStamp(stamp,lock),/installed app differs/);
+  assert.doesNotThrow(()=>assertDemoInstallStamp({...stamp,moduleIntegrity:integrity('b')},lock));
+});
+
+test('a verified receipt and runtime tar must name the module version from the lock',()=>{
+  const integrity=`sha256-${'a'.repeat(64)}`;
+  const source={kind:'git',repository:'https://github.com/creezio/Creezio-Extension-Starter',
+    revision,integrity};
+  const lock={module:{version:'0.1.3',runtimeIntegrity:integrity,validationIntegrity:integrity}};
+  const receipt={module:{id:'creezio.purchase-requests',
+    origin:'https://github.com/creezio/Creezio-Extension-Starter',version:'0.1.3',source},
+    runtime:{integrity,location:{path:'.creezio/packages/creezio-purchase-requests-0.1.3.tgz'}},
+    validation:{integrity,location:{path:'.creezio/packages/creezio-purchase-requests-0.1.3-validation.tgz'}}};
+  assert.doesNotThrow(()=>assertDemoModuleReceipt(receipt,lock));
+  assert.throws(()=>assertDemoModuleReceipt({...receipt,module:{...receipt.module,version:'0.1.2'}},lock),
+    /detached receipt/);
+  assert.throws(()=>assertDemoModuleReceipt({...receipt,runtime:{...receipt.runtime,
+    location:{path:'.creezio/packages/creezio-purchase-requests-0.1.2.tgz'}}},lock),
+    /detached receipt/);
+  const entries=[{path:'package/package.json',bytes:Buffer.from(JSON.stringify({
+    name:'@creezio/purchase-requests',version:'0.1.3'}))},
+  {path:'package/module/manifest.json',bytes:Buffer.from(JSON.stringify({
+    identity:{id:'creezio.purchase-requests',version:'0.1.3',source}}))}];
+  assert.doesNotThrow(()=>assertDemoModuleArchive(entries,receipt));
+  assert.throws(()=>assertDemoModuleArchive([{...entries[0],bytes:Buffer.from(JSON.stringify({
+    name:'@creezio/purchase-requests',version:'0.1.2'}))},entries[1]],receipt),
+    /module archive identity/);
+  assert.throws(()=>assertDemoModuleArchive([entries[0],{...entries[1],
+    bytes:Buffer.from(JSON.stringify({identity:{id:'creezio.purchase-requests',version:'0.1.2',source}}))}],
+    receipt),/module archive identity/);
+  assert.throws(()=>assertDemoModuleArchive([entries[0],{...entries[1],
+    bytes:Buffer.from(JSON.stringify({identity:{id:'creezio.purchase-requests',version:'0.1.3',
+      source:{...source,revision:'b'.repeat(40)}}}))}],receipt),/module archive identity/);
+});
+
+test('npm dependency selection rejects a different module version, spec or archive digest',()=>{
+  const moduleArchive=Buffer.from('pinned module archive');
+  const sdkArchive=Buffer.from('pinned sdk archive');
+  const spec='file:.creezio/packages/creezio-purchase-requests-0.1.3.tgz';
+  const sdkSpec='file:.creezio/packages/creezio-sdk-1.2.0.tgz';
+  const integrity=bytes=>`sha512-${createHash('sha512').update(bytes).digest('base64')}`;
+  const source={sdk:{version:'1.2.0'},module:{version:'0.1.3'}};
+  const pack={devDependencies:{'@creezio/sdk':sdkSpec},
+    dependencies:{'@creezio/purchase-requests':spec}};
+  const lock={packages:{'':pack,
+    'node_modules/@creezio/sdk':{version:'1.2.0',resolved:sdkSpec,integrity:integrity(sdkArchive)},
+    'node_modules/@creezio/purchase-requests':{
+      version:'0.1.3',resolved:spec,integrity:integrity(moduleArchive)}}};
+  const archives={'@creezio/sdk':sdkArchive,'@creezio/purchase-requests':moduleArchive};
+  assert.doesNotThrow(()=>assertDemoDependencySelection(pack,lock,source,archives));
+  assert.throws(()=>assertDemoDependencySelection(pack,{packages:{...lock.packages,
+    'node_modules/@creezio/purchase-requests':{
+      ...lock.packages['node_modules/@creezio/purchase-requests'],version:'0.1.2'}}},source,archives),
+    /package lock differs/);
+  assert.throws(()=>assertDemoDependencySelection({...pack,
+    dependencies:{'@creezio/purchase-requests':'file:old.tgz'}},lock,source,archives),
+    /package lock does not select/);
+  assert.throws(()=>assertDemoDependencySelection(pack,lock,source,{
+    ...archives,'@creezio/purchase-requests':Buffer.from('different module archive')}),
+    /package lock differs/);
 });
