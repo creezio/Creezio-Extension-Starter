@@ -26,6 +26,6 @@ Pour reproduire ce parcours dans un checkout propre sous PowerShell, exécuter `
 
 Les tests locaux de la candidate ne valent pas une recette de mise à jour de l'application. Lab et sa version installée sur SDK 1.1 conservent 0.1.2 jusqu'à une évolution distincte de l'hôte.
 
-La démo exige en plus un verrou Core/SDK réel décrivant la nouvelle archive ; son application persistante actuelle n'est pas mise à niveau par la seule adoption du SDK dans ce dépôt.
+La démo exige en plus un verrou Core/SDK/module réel décrivant les archives et la version exacte du module. Un ancien verrou sans version de module reste limité à 0.1.0, prouvé par le reçu et l'archive. L'application persistante actuelle n'est pas mise à niveau par la seule adoption du SDK dans ce dépôt.
 
 Voir le [PRD](prd.md) et le [journal de version](CHANGELOG.md). Le dépôt source contient aussi les décisions, le suivi et les instructions de contribution réservés au développement.

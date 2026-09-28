@@ -7,6 +7,7 @@
 - Les brouillons, onglets et pièces jointes restent liés au panneau et au scope vérifiés ; une réponse tardive d'un ancien scope ne remplace pas la fiche courante.
 - Le schéma de sortie précise qu'`amountMinor=12345` avec `EUR` représente 123,45 EUR. Cette annotation ne qualifie pas à elle seule la prose du chat interne.
 - Le pin, le verrou npm et la CI fixent l'archive publique SDK 1.2.0 à son SHA-256 vérifié. Aucun paquet 0.1.3 n'est publié par ce candidat.
+- La préparation d'une nouvelle démo lit la version exacte du module dans son verrou et vérifie le reçu, l'archive, la sélection npm et la composition correspondants. Un ancien verrou sans version reste limité au module 0.1.0 ; une démo existante d'une autre provenance est refusée avant copie.
 
 ## 0.1.2 — publiée
 
