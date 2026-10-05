@@ -12,7 +12,7 @@ if(!/^[a-f0-9]{40}$|^[a-f0-9]{64}$/.test(sourceRevision??'')
   || !/^sha256-[a-f0-9]{64}$/.test(sourceIntegrity??''))
   throw new Error('A real pinned Git source revision and source digest are required.');
 
-const moduleId='creezio.purchase-requests',version='0.1.3';
+const moduleId='creezio.purchase-requests',version='0.1.4';
 const reviewSkill='plugin/skills/review-purchase-request/SKILL.md';
 const reviewSkillIntegrity=`sha256-${createHash('sha256').update(
   readFileSync(path.join(root,reviewSkill))).digest('hex')}`;
@@ -68,7 +68,8 @@ const schemas=Object.entries({
 }).map(([id,schema])=>({id,schema}));
 
 const model=name=>ref('model',name);
-const operation=(id,title,kind,input,output,handler,{reads=[],writes=[],fileWrites=[],pagination=false,versioned=false}={})=>({
+const operation=(id,title,kind,input,output,handler,{reads=[],writes=[],fileWrites=[],pagination=false,versioned=false,
+  executionItems=50}={})=>({
   id,title,kind,input:schema(input),output:schema(output),permissions:use,audiences:['admin','app'],
   actors:['user','delegated-user'],context:'required',handler:{path:'dist/module/operations.js',export:handler},
   effects:{reads:reads.map(model),writes:[...writes.map(model),...fileWrites.map(id=>ref('file',id))],
@@ -86,7 +87,7 @@ const operation=(id,title,kind,input,output,handler,{reads=[],writes=[],fileWrit
   idempotency:kind==='command'?{mode:'required',keyField:'requestKey',scope:'actor-context-operation',
     retentionSeconds:86400}:{mode:'none'},
   approval:{mode:'none'},concurrency:versioned?{mode:'object-version',versionField:'revision'}:{mode:'none'},
-  execution:{maxDurationMs:5000,maxItems:50,resumable:false},audit:{required:true,redactFields:['description']},
+  execution:{maxDurationMs:5000,maxItems:executionItems,resumable:false},audit:{required:true,redactFields:['description']},
   public:false,
 });
 const operations=[
@@ -106,7 +107,7 @@ const operations=[
     {reads:['request','file_metadata'],writes:['request','file_metadata','request_attachment'],
       fileWrites:['request-attachment'],versioned:true}),
   operation('attachment.list','Lister les pièces jointes','query','attachment-list-input','attachment-list-output','attachmentList',
-    {reads:['request','request_attachment'],pagination:true}),
+    {reads:['request','request_attachment'],pagination:true,executionItems:51}),
 ];
 
 const api=[];

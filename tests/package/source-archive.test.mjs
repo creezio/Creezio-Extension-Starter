@@ -91,14 +91,14 @@ test('module version selects exact archive names; a missing legacy version means
     revision,url:`https://codeload.github.com/creezio/Creezio-D1R2/tar.gz/${revision}`,
     integrity},sdk:{version:'1.2.0',integrity,
       url:'https://github.com/creezio/Creezio-D1R2/releases/download/sdk-v1.2.0/creezio-sdk-1.2.0.tgz'},
-    module:{version:'0.1.3',runtimeIntegrity:integrity,validationIntegrity:integrity,
+    module:{version:'0.1.4',runtimeIntegrity:integrity,validationIntegrity:integrity,
       receiptIntegrity:integrity}};
-  assert.equal(checkedSourceLock(base).module.version,'0.1.3');
-  assert.equal(moduleVersionRange(checkedSourceLock(base)),'0.1.3');
-  assert.deepEqual(moduleArtifactNames('0.1.3'),{
-    runtime:'creezio-purchase-requests-0.1.3.tgz',
-    validation:'creezio-purchase-requests-0.1.3-validation.tgz',
-    receipt:'manifest-0.1.3.json'});
+  assert.equal(checkedSourceLock(base).module.version,'0.1.4');
+  assert.equal(moduleVersionRange(checkedSourceLock(base)),'0.1.4');
+  assert.deepEqual(moduleArtifactNames('0.1.4'),{
+    runtime:'creezio-purchase-requests-0.1.4.tgz',
+    validation:'creezio-purchase-requests-0.1.4-validation.tgz',
+    receipt:'manifest-0.1.4.json'});
   assert.equal(checkedSourceLock({...base,module:{...base.module,version:'0.2.0'}})
     .module.version,'0.2.0');
   assert.equal(moduleArtifactNames('0.2.0-rc.1').runtime,
@@ -121,7 +121,7 @@ test('module version selects exact archive names; a missing legacy version means
 test('an installed app rejects a different module pin before copying new packages',()=>{
   const integrity=value=>`sha256-${value.repeat(64)}`;
   const lock={core:{revision},sdk:{integrity:integrity('a')},
-    module:{version:'0.1.3',runtimeIntegrity:integrity('b')}};
+    module:{version:'0.1.4',runtimeIntegrity:integrity('b')}};
   const stamp={sourceRevision:revision,sdkIntegrity:integrity('a'),
     moduleIntegrity:integrity('c')};
   assert.throws(()=>assertDemoInstallStamp(stamp,lock),/installed app differs/);
@@ -132,11 +132,11 @@ test('a verified receipt and runtime tar must name the module version from the l
   const integrity=`sha256-${'a'.repeat(64)}`;
   const source={kind:'git',repository:'https://github.com/creezio/Creezio-Extension-Starter',
     revision,integrity};
-  const lock={module:{version:'0.1.3',runtimeIntegrity:integrity,validationIntegrity:integrity}};
+  const lock={module:{version:'0.1.4',runtimeIntegrity:integrity,validationIntegrity:integrity}};
   const receipt={module:{id:'creezio.purchase-requests',
-    origin:'https://github.com/creezio/Creezio-Extension-Starter',version:'0.1.3',source},
-    runtime:{integrity,location:{path:'.creezio/packages/creezio-purchase-requests-0.1.3.tgz'}},
-    validation:{integrity,location:{path:'.creezio/packages/creezio-purchase-requests-0.1.3-validation.tgz'}}};
+    origin:'https://github.com/creezio/Creezio-Extension-Starter',version:'0.1.4',source},
+    runtime:{integrity,location:{path:'.creezio/packages/creezio-purchase-requests-0.1.4.tgz'}},
+    validation:{integrity,location:{path:'.creezio/packages/creezio-purchase-requests-0.1.4-validation.tgz'}}};
   assert.doesNotThrow(()=>assertDemoModuleReceipt(receipt,lock));
   assert.throws(()=>assertDemoModuleReceipt({...receipt,module:{...receipt.module,version:'0.1.2'}},lock),
     /detached receipt/);
@@ -144,9 +144,9 @@ test('a verified receipt and runtime tar must name the module version from the l
     location:{path:'.creezio/packages/creezio-purchase-requests-0.1.2.tgz'}}},lock),
     /detached receipt/);
   const entries=[{path:'package/package.json',bytes:Buffer.from(JSON.stringify({
-    name:'@creezio/purchase-requests',version:'0.1.3'}))},
+    name:'@creezio/purchase-requests',version:'0.1.4'}))},
   {path:'package/module/manifest.json',bytes:Buffer.from(JSON.stringify({
-    identity:{id:'creezio.purchase-requests',version:'0.1.3',source}}))}];
+    identity:{id:'creezio.purchase-requests',version:'0.1.4',source}}))}];
   assert.doesNotThrow(()=>assertDemoModuleArchive(entries,receipt));
   assert.throws(()=>assertDemoModuleArchive([{...entries[0],bytes:Buffer.from(JSON.stringify({
     name:'@creezio/purchase-requests',version:'0.1.2'}))},entries[1]],receipt),
@@ -155,23 +155,23 @@ test('a verified receipt and runtime tar must name the module version from the l
     bytes:Buffer.from(JSON.stringify({identity:{id:'creezio.purchase-requests',version:'0.1.2',source}}))}],
     receipt),/module archive identity/);
   assert.throws(()=>assertDemoModuleArchive([entries[0],{...entries[1],
-    bytes:Buffer.from(JSON.stringify({identity:{id:'creezio.purchase-requests',version:'0.1.3',
+    bytes:Buffer.from(JSON.stringify({identity:{id:'creezio.purchase-requests',version:'0.1.4',
       source:{...source,revision:'b'.repeat(40)}}}))}],receipt),/module archive identity/);
 });
 
 test('npm dependency selection rejects a different module version, spec or archive digest',()=>{
   const moduleArchive=Buffer.from('pinned module archive');
   const sdkArchive=Buffer.from('pinned sdk archive');
-  const spec='file:.creezio/packages/creezio-purchase-requests-0.1.3.tgz';
+  const spec='file:.creezio/packages/creezio-purchase-requests-0.1.4.tgz';
   const sdkSpec='file:.creezio/packages/creezio-sdk-1.2.0.tgz';
   const integrity=bytes=>`sha512-${createHash('sha512').update(bytes).digest('base64')}`;
-  const source={sdk:{version:'1.2.0'},module:{version:'0.1.3'}};
+  const source={sdk:{version:'1.2.0'},module:{version:'0.1.4'}};
   const pack={devDependencies:{'@creezio/sdk':sdkSpec},
     dependencies:{'@creezio/purchase-requests':spec}};
   const lock={packages:{'':pack,
     'node_modules/@creezio/sdk':{version:'1.2.0',resolved:sdkSpec,integrity:integrity(sdkArchive)},
     'node_modules/@creezio/purchase-requests':{
-      version:'0.1.3',resolved:spec,integrity:integrity(moduleArchive)}}};
+      version:'0.1.4',resolved:spec,integrity:integrity(moduleArchive)}}};
   const archives={'@creezio/sdk':sdkArchive,'@creezio/purchase-requests':moduleArchive};
   assert.doesNotThrow(()=>assertDemoDependencySelection(pack,lock,source,archives));
   assert.throws(()=>assertDemoDependencySelection(pack,{packages:{...lock.packages,

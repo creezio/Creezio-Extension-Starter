@@ -39,6 +39,15 @@ test('eight operations have exact admin/app HTTP bindings and engine-owned reque
   }
 });
 
+test('attachment pagination accepts 50 rows with its preceding ownership read',()=>{
+  const list=operations.get('attachment.list');
+  const input=schemas.get(list.input.schemaId);
+  assert.equal(input.properties.limit.maximum,50);
+  assert.equal(list.pagination.maxItems,50);
+  assert.equal(list.execution.maxItems,51);
+  assert.equal(operations.get('request.list').execution.maxItems,50);
+});
+
 test('all operations have MCP exposure, but only two scoped reads render widgets',()=>{
   const mcp=manifest.contracts.mcp;
   assert.equal(mcp.tools.length,8);
