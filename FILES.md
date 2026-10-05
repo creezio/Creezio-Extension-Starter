@@ -3,7 +3,7 @@
 - `module/public-contract.ts` : IDs des huit opérations et types JSON partagés ; `requestKey` appartient à l'idempotence du moteur.
 - `module/models.ts` : modèles `request`, `file_metadata`, `request_attachment`, sans SQL ni migration dans le paquet.
 - `module/operations.ts` : handlers SDK publics, contrôle de propriétaire/contexte, révision attendue et plans D1/R2.
-- `module/generate-manifest.mjs` et `module/manifest.json` : déclaration complète générée avec provenance Git/intégrité réelles ; la catégorie privée `request-attachment` partage son propriétaire principal entre audiences autorisées.
+- `module/generate-manifest.mjs` et `module/manifest.json` : déclaration complète générée avec provenance Git/intégrité réelles ; la catégorie privée `request-attachment` partage son propriétaire principal entre audiences autorisées. `attachment.list` alloue un élément de budget pour la lecture du dossier et 50 pour sa page maximale.
 - `ui/` : vues workspace/front, états de formulaire, journal public SDK 1.2 et composants publics ; la création front utilise `/purchase-requests/new`. Les anciens pointeurs de commandes incertaines restent lisibles sans replay.
 - `plugin/` : manifeste, configuration MCP, contribution et skill de lecture des demandes ; les ressources/widgets HTML sont dans `ui/widgets/`.
 - `tests/` : six familles de contrôles backend/ui/api-mcp/widgets/package/docs ; la suite UI vérifie la navigation réelle via le composant public `Workspace` du SDK.

@@ -94,6 +94,10 @@ test('staged attachment publication, relation, and request CAS share one batch',
   assert.equal(result.output.attachment.reference.intentId,staged.intentId);
   const listed=await attachmentList({id:'req-1',limit:20},context);
   assert.deepEqual(listed.output.items,[]);
+  const boundary=await attachmentList({id:'req-1',limit:50},context);
+  assert.deepEqual(boundary.output.items,[]);
+  await assert.rejects(()=>attachmentList({id:'req-1',limit:51},context),
+    error=>error.code==='invalid_input');
   await assert.rejects(()=>attachmentLink({requestKey,id:'req-1',revision:2,staged},context),
     error=>error.code==='conflict');
   const submitted=harness({...initial,status:'submitted',submitted_at:instant});

@@ -13,7 +13,7 @@ if(git('status','--porcelain','--untracked-files=all').toString().trim())throw n
 const revision=git('rev-parse','HEAD').toString().trim();
 const sourceIntegrity='sha256-'+createHash('sha256').update(git('archive','--format=tar',revision)).digest('hex');
 const sdk=JSON.parse(readFileSync(fileURLToPath(import.meta.resolve('@creezio/sdk/package.json')),'utf8'));
-if(assertSupportedSdk(sdk)!=='1.2.0')throw new Error('Module 0.1.3 requires SDK 1.2.0.');
+if(assertSupportedSdk(sdk)!=='1.2.0')throw new Error('Module 0.1.4 requires SDK 1.2.0.');
 for(const name of ['dist','.quality']){
  const target=path.join(root,name);const stat=lstatSync(target,{throwIfNoEntry:false});
  if(stat&&(!stat.isDirectory()||stat.isSymbolicLink()))throw new Error('Invalid build directory.');

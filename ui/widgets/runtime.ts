@@ -10,7 +10,7 @@ const statusName = {draft: 'Brouillon', submitted: 'Soumise', withdrawn: 'Retir√
 
 /** Each MCP Apps iframe owns its selection; rendering never calls a business tool. */
 export async function mountPurchaseWidget(kind: Kind): Promise<void> {
-  const app = new App({name: `Creezio purchase request ${kind}`, version: '0.1.3'}, {});
+  const app = new App({name: `Creezio purchase request ${kind}`, version: '0.1.4'}, {});
   const root = document.getElementById('purchase-widget');
   const status = document.getElementById('status');
   const preview = document.getElementById('preview');

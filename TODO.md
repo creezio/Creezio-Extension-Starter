@@ -1,6 +1,6 @@
 # Suivi — première tranche T30
 
-Statuts historiques au 28 septembre 2026 : le SDK 1.1.0 et les modules 0.1.0, 0.1.1 et 0.1.2 ont été publiés. Ce checkout prépare désormais 0.1.3 avec le journal public SDK 1.2.0, publié et épinglé par URL et SHA-256 dans la CI et le verrou du Starter. La démo et Lab conservent leur version et leurs données jusqu'à une transition explicite de l'hôte.
+Statuts historiques au 28 septembre 2026 : le SDK 1.1.0 et les modules 0.1.0, 0.1.1 et 0.1.2 ont été publiés. Le module 0.1.3 et le SDK 1.2.0 sont désormais publics ; ce checkout prépare 0.1.4 pour corriger le budget de `attachment.list`. La démo et Lab conservent leur version et leurs données jusqu'à une transition explicite de l'hôte.
 
 | Travail | Responsable | État |
 |---|---|---|
@@ -26,3 +26,7 @@ Vérifier la route `/purchase-requests/new` dans le manifeste, la contribution f
 ## Candidate — module 0.1.3
 
 L'adoption du journal SDK 1.2 concerne uniquement les vues workspace/front. Les anciennes commandes incertaines restent consultables par leur statut sans nouveau scope inféré ni replay. Le SDK 1.2 **public** est fixé dans `ci/sdk-pin.json`, `package.json` et `package-lock.json` ; ses octets installés doivent être comparés à l'archive avant packaging. Produire un commit source propre, exécuter les six suites et qualifier l'archive fermée. La recette de mise à jour et de conservation des données de la démo est séparée ; aucun runtime, D1 ou R2 n'est modifié par cette branche.
+
+## Candidate — module 0.1.4
+
+Qualifier la frontière `attachment.list` à 50 pièces et le refus de 51 sans élargir son entrée ni sa pagination. Générer le manifeste et les archives depuis un commit source propre, puis vérifier les six suites et la provenance. L'adoption par Lab est une transition distincte qui préserve ses données et son paquet antérieur jusqu'à qualification.

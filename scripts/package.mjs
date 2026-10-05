@@ -69,7 +69,7 @@ function sdkProof(packageJson){
   const installed=JSON.parse(readFileSync(sdkPath,'utf8'));
   try{assertSupportedSdk(installed);}catch(error){fail(error.message);}
   if(packageJson.peerDependencies?.['@creezio/sdk']!=='^1.2.0')fail('SDK peer contract');
-  if(installed.version!=='1.2.0')fail('Module 0.1.3 requires SDK 1.2.0.');
+  if(installed.version!=='1.2.0')fail('Module 0.1.4 requires SDK 1.2.0.');
   const declared=process.env.CREEZIO_SDK_TARBALL;
   if(!declared||!declared.endsWith('.tgz'))fail('CREEZIO_SDK_TARBALL must identify the built SDK npm tarball');
   const tarball=path.resolve(root,declared);

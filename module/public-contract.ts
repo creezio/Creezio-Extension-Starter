@@ -1,6 +1,6 @@
 /** Versioned JSON boundary shared by the packaged module, its views and its plugin. */
 export const PURCHASE_MODULE_ID = 'creezio.purchase-requests' as const;
-export const PURCHASE_MODULE_VERSION = '0.1.3' as const;
+export const PURCHASE_MODULE_VERSION = '0.1.4' as const;
 
 export const PURCHASE_OPERATIONS = Object.freeze({
   create: 'request.create',

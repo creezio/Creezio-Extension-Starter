@@ -1,12 +1,17 @@
 # Changelog
 
-## 0.1.3 — candidate, non publiée
+## 0.1.4 — candidate, non publiée
+
+- `attachment.list` conserve une limite publique de 50 pièces. Son budget d'exécution couvre désormais la lecture préalable de la demande et les 50 entrées de la liste ; la requête 51 reste refusée par le schéma.
+- Aucune migration ni modification des données, droits, entrées, pagination ou autres opérations.
+
+## 0.1.3 — publiée
 
 - Les vues workspace et front réutilisent le journal public du SDK 1.2 pour persister la clé d'une nouvelle commande avant son envoi, consulter un résultat incertain par statut et ne jamais rejouer la commande automatiquement.
 - Les panneaux 0.1.2 qui portent une ancienne commande incertaine restent consultables par leur pointeur de statut existant. Ils bloquent tout nouvel envoi jusqu'à confirmation ; aucune identité de session n'est déduite de leur seul contenu.
 - Les brouillons, onglets et pièces jointes restent liés au panneau et au scope vérifiés ; une réponse tardive d'un ancien scope ne remplace pas la fiche courante.
 - Le schéma de sortie précise qu'`amountMinor=12345` avec `EUR` représente 123,45 EUR. Cette annotation ne qualifie pas à elle seule la prose du chat interne.
-- Le pin, le verrou npm et la CI fixent l'archive publique SDK 1.2.0 à son SHA-256 vérifié. Aucun paquet 0.1.3 n'est publié par ce candidat.
+- Le pin, le verrou npm et la CI fixent l'archive publique SDK 1.2.0 à son SHA-256 vérifié.
 - La préparation d'une nouvelle démo lit la version exacte du module dans son verrou et vérifie le reçu, l'archive, la sélection npm et la composition correspondants. Un ancien verrou sans version reste limité au module 0.1.0 ; une démo existante d'une autre provenance est refusée avant copie.
 
 ## 0.1.2 — publiée
